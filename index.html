@@ -1,0 +1,2526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Academy Español – Escape Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ─────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ── WORLD COLOUR TOKENS ───────────────────────────── */
+/* Each world injects these onto :root via JS */
+:root{
+  --w-sky:#5c94fc;
+  --w-accent:#e8a000;
+  --w-accent2:#f8c800;
+  --w-dark:#1a0800;
+  --w-btn:#f8c800;
+  --w-btn-shadow:#a06000;
+  --w-prompt:#daeeff;
+  --w-prompt-border:#5c94fc;
+  --w-banner:#e8a000;
+  --w-prompt-text:#1a0800;
+  --w-prompt-dir:#d01000;
+  --w-card-bg:#fff;
+  --w-card-text:#1a0800;
+  --w-ctx-bg:#fffbe6;
+  --w-ctx-text:#222;
+  --w-feedback-bad:#cc0000;
+}
+
+/* ── GLOBAL ─────────────────────────────────────────── */
+body{
+  background:#0a0505;
+  color:#1a0800; /* dark default for title screen elements */
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* scanline */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 4px);
+}
+
+/* ── CLOUD LAYER (unused) ───────────────────────────── */
+.cloud-layer{display:none;}
+.cloud{display:none;}
+
+/* ── GROUND ─────────────────────────────────────────── */
+/* ── DRAGON WORLD GROUND (stone cliff edge) ─────────── */
+.ground{
+  position:fixed;bottom:0;left:0;width:100%;height:52px;
+  background:#4a3828;
+  border-top:4px solid #2a1e14;
+  z-index:3;display:flex;align-items:flex-start;overflow:hidden;
+}
+.ground-tile{
+  width:52px;height:48px;
+  background:linear-gradient(180deg,#5c4433 0%,#3d2a1e 100%);
+  border-right:2px solid #2a1e14;
+  flex-shrink:0;position:relative;
+}
+.ground-tile::before{
+  content:'';position:absolute;
+  top:6px;left:6px;right:6px;height:3px;
+  background:rgba(255,255,255,0.08);border-radius:2px;
+}
+.ground-tile::after{
+  content:'';position:absolute;
+  top:16px;left:10px;right:10px;height:2px;
+  background:rgba(0,0,0,0.2);border-radius:2px;
+}
+
+/* ── SCREENS ─────────────────────────────────────────── */
+.screen{
+  position:relative;
+  min-height:100vh;
+  display:none;flex-direction:column;align-items:center;
+  padding:1.2rem 1rem 72px;
+  background:transparent;
+}
+.screen.active{display:flex;}
+#room-screen.active{padding:0 0 60px;background:transparent;color:#fff;}
+
+/* Room screen elements must sit above the parallax (z-index:1) */
+/* We give individual room children z-index:2 rather than the screen itself */
+.hud,.timer-bar-wrap,.wbanner,.progress-track,.qcard{
+  position:relative;
+  z-index:2;
+}
+
+/* Title screen — semi-dark backdrop so text reads over parallax */
+#title-screen::before{
+  content:'';
+  position:fixed;inset:0;z-index:0;
+  background:rgba(0,0,0,0.55);
+  pointer-events:none;
+}
+#title-screen > *{position:relative;z-index:1;}
+
+/* ── PIXEL BORDER MIXIN ──────────────────────────────── */
+/* reused pattern: white bg, thick dark border, hard shadow */
+.pbox{
+  background:#fff;
+  border:4px solid var(--w-dark);
+  box-shadow:6px 6px 0 var(--w-dark);
+}
+
+/* ══════════════════════════════════════
+   TITLE SCREEN
+══════════════════════════════════════ */
+#title-screen{justify-content:center;gap:.5rem;text-align:center;}
+
+/* ── SVG LOGO ── */
+.logo-wrap{
+  width:100%;max-width:560px;
+  margin:.3rem auto .1rem;
+}
+.logo-svg{width:100%;height:auto;filter:drop-shadow(0 4px 18px rgba(0,0,0,.5));}
+
+.title-mushroom{
+  font-size:4rem;display:inline-block;
+  animation:bounceY .65s ease-in-out infinite alternate;
+}
+@keyframes bounceY{from{transform:translateY(0);}to{transform:translateY(-16px);}}
+
+h1.game-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.6rem,5vw,2.6rem);
+  color:#f8d800;
+  text-shadow:2px 2px 0 #800,4px 4px 0 #400,0 0 30px rgba(255,150,0,.6);
+  letter-spacing:3px;
+  line-height:1.2;
+}
+.game-sub{
+  font-family:'Cinzel',serif;
+  font-size:clamp(.55rem,1.5vw,.75rem);
+  color:rgba(255,255,255,.8);
+  letter-spacing:5px;
+  margin-top:.1rem;
+  text-shadow:1px 1px 4px rgba(0,0,0,.5);
+}
+
+.story-card{
+  max-width:520px;width:100%;
+  padding:1rem 1.2rem;
+  background:rgba(255,249,224,0.95);
+  border:4px solid #1a0800;
+  box-shadow:6px 6px 0 #1a0800;
+  font-size:.9rem;font-weight:700;color:#1a0800;
+  line-height:1.7;text-align:left;
+  margin:.5rem 0;
+}
+.story-card strong{color:#d01000;}
+
+/* ── DIFFICULTY ITEM BOXES ─────────────────────────── */
+.diff-label{
+  font-family:'Press Start 2P',monospace;
+  font-size:.75rem;letter-spacing:2px;
+  margin:.4rem 0 .55rem;
+  color:#fff; /* white over dark overlay */
+  text-shadow:0 2px 6px rgba(0,0,0,0.8);
+}
+.diff-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;
+  max-width:560px;width:100%;}
+
+.item-box{
+  position:relative;
+  background:#f8c800;
+  border:4px solid #1a0800;
+  box-shadow:5px 5px 0 #1a0800,
+             inset 0 3px 0 rgba(255,255,255,.4),
+             inset 0 -3px 0 rgba(0,0,0,.25);
+  cursor:pointer;
+  padding:.9rem .6rem .8rem;
+  text-align:center;
+  transition:transform .08s,box-shadow .08s;
+  user-select:none;
+}
+.item-box:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 #1a0800;}
+.item-box:active{transform:translate(5px,5px);box-shadow:0 0 0 #1a0800;}
+.item-box.selected{
+  box-shadow:5px 5px 0 #1a0800,0 0 0 3px #fff,0 0 0 6px var(--sel-color,#d01000);
+  animation:selectedPulse 1s ease-in-out infinite alternate;
+}
+@keyframes selectedPulse{from{box-shadow:5px 5px 0 #1a0800,0 0 0 3px #fff,0 0 0 6px var(--sel-color,#d01000);}
+  to{box-shadow:5px 5px 0 #1a0800,0 0 0 3px #fff,0 0 0 8px var(--sel-color,#d01000);}}
+
+.item-box.diff-easy{background:#d4f5d4;--sel-color:#00b020;}
+.item-box.diff-mid {background:#fff9d4;--sel-color:#d07000;}
+.item-box.diff-hard{background:#ffe0e0;--sel-color:#cc0000;}
+
+.item-icon{font-size:2.8rem;display:block;margin-bottom:.4rem;
+  animation:itemSpin 2s linear infinite;}
+@keyframes itemSpin{0%,100%{transform:rotateY(0deg);}50%{transform:rotateY(180deg);}}
+.item-box:hover .item-icon,.item-box.selected .item-icon{animation-play-state:paused;}
+
+.item-name{
+  font-family:'Press Start 2P',monospace;
+  font-size:.65rem;letter-spacing:1px;
+  display:block;margin-bottom:.5rem;
+}
+.diff-easy .item-name{color:#00801a;}
+.diff-mid  .item-name{color:#a05000;}
+.diff-hard .item-name{color:#aa0000;}
+
+.item-details{
+  font-family:'Nunito',sans-serif;font-weight:800;
+  font-size:.95rem;color:#444;line-height:1.8;
+}
+.item-check{
+  position:absolute;top:6px;right:8px;
+  font-size:1.2rem;display:none;
+}
+.item-box.selected .item-check{display:block;}
+
+/* ── WORLD PREVIEW GRID ─────────────────────────────── */
+.world-preview{
+  display:grid;grid-template-columns:1fr 1fr;gap:.55rem;
+  max-width:560px;width:100%;margin:.3rem 0 .6rem;
+}
+.wpreview-card{
+  background:#fff;border:4px solid #1a0800;box-shadow:4px 4px 0 #1a0800;
+  padding:.7rem .9rem;display:flex;gap:.7rem;align-items:center;
+  cursor:pointer;transition:transform .08s,box-shadow .08s;
+}
+.wpreview-card:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 #1a0800;}
+.wpreview-card.locked{opacity:.38;}
+.wpreview-icon{font-size:2rem;line-height:1;flex-shrink:0;}
+.wpreview-text{font-family:'Press Start 2P',monospace;font-size:.55rem;line-height:2.2;color:#1a0800;}
+.wpreview-num{color:#d01000;}
+
+/* ── START BTN ───────────────────────────────────────── */
+.start-btn{
+  font-family:'Fredoka One',cursive;
+  font-size:1.3rem;letter-spacing:2px;
+  padding:.7rem 2.5rem;
+  background:#d01000;color:#fff;
+  border:4px solid #1a0800;
+  box-shadow:6px 6px 0 #1a0800;
+  cursor:pointer;
+  transition:transform .08s,box-shadow .08s;
+  margin-top:.3rem;
+}
+.start-btn:hover{background:#ff2020;transform:translate(2px,2px);box-shadow:4px 4px 0 #1a0800;}
+.start-btn:active{transform:translate(6px,6px);box-shadow:0 0 0 #1a0800;}
+
+/* ══════════════════════════════════════
+   ROOM SCREEN
+══════════════════════════════════════ */
+#room-screen{gap:0;padding-top:0;}
+
+/* ── HUD ─────────────────────────────────────────────── */
+.hud{
+  width:100%;max-width:100%;
+  background:rgba(0,0,0,0.45);color:#fff;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:.55rem 1.2rem;
+  font-family:'Press Start 2P',monospace;font-size:.55rem;
+  letter-spacing:1px;flex-wrap:wrap;gap:.4rem;
+  position:sticky;top:0;z-index:20;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.hud-world{color:#f8c800;}
+.hud-coins{color:#f8d800;}
+.hud-home-btn{
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.3);
+  color:#fff;
+  cursor:pointer;
+  padding:.3rem .5rem;
+  border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .08s;
+  line-height:1;
+}
+.hud-home-btn:hover{background:rgba(255,255,255,0.25);transform:scale(1.1);}
+.hud-home-btn:active{transform:scale(.95);}
+
+/* ── HOME CONFIRM OVERLAY ─────────────────────────────── */
+#home-confirm-ov{
+  position:fixed;inset:0;z-index:501;
+  background:rgba(0,0,0,0.8);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.2rem;text-align:center;padding:2rem;
+}
+#home-confirm-ov.show{display:flex;}
+.hc-icon{font-size:3.5rem;}
+.hc-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.4rem,5vw,2rem);
+  color:#fff;letter-spacing:2px;
+  text-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+.hc-sub{
+  font-family:'Press Start 2P',monospace;
+  font-size:.5rem;color:#ccc;letter-spacing:2px;line-height:2;
+}
+.hc-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;}
+.hc-btn-yes{
+  font-family:'Fredoka One',cursive;font-size:1.2rem;
+  padding:.7rem 2rem;background:#cc0000;color:#fff;
+  border:3px solid #fff;cursor:pointer;letter-spacing:1px;
+  transition:transform .08s;
+}
+.hc-btn-yes:hover{transform:scale(1.05);}
+.hc-btn-no{
+  font-family:'Fredoka One',cursive;font-size:1.2rem;
+  padding:.7rem 2rem;background:rgba(255,255,255,0.15);color:#fff;
+  border:3px solid rgba(255,255,255,0.4);cursor:pointer;letter-spacing:1px;
+  transition:transform .08s;
+}
+.hc-btn-no:hover{transform:scale(1.05);background:rgba(255,255,255,0.25);}
+  font-size:.36rem;letter-spacing:1px;
+  padding:.15rem .45rem;
+  border:2px solid currentColor;
+}
+.hud-diff-badge.easy{color:#00c828;}
+.hud-diff-badge.mid {color:#f0a000;}
+.hud-diff-badge.hard{color:#ff3030;}
+.hud-timer{color:#f8c800;}
+.hud-timer.warn{color:#ff9000;}
+.hud-timer.danger{color:#ff2020;animation:blink .5s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ── TIMER BAR ───────────────────────────────────────── */
+.timer-bar-wrap{width:100%;max-width:100%;height:10px;background:#333;
+  position:sticky;top:44px;z-index:19;display:none;}
+.timer-bar-fill{height:100%;background:#00c828;
+  transition:width .5s linear,background .3s;}
+.timer-bar-fill.warn  {background:#f0a000;}
+.timer-bar-fill.danger{background:#ff2020;}
+
+/* ── WORLD BANNER ────────────────────────────────────── */
+.wbanner{
+  width:100%;max-width:100%;
+  background:rgba(0,0,0,0.3);
+  border-top:1px solid rgba(255,255,255,0.12);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.55rem 1.2rem;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.wbanner-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.4rem,4vw,2.2rem);
+  color:#fff;letter-spacing:2px;
+  text-shadow:0 2px 8px rgba(0,0,0,0.6);
+}
+.wbanner-right{display:flex;align-items:center;gap:.8rem;}
+.wbanner-icon{font-size:2.4rem;}
+.wbanner-qtype{
+  font-family:'Press Start 2P',monospace;
+  font-size:.7rem;letter-spacing:1px;
+  padding:.35rem .75rem;
+  border:2px solid rgba(255,255,255,0.3);
+  background:rgba(0,0,0,0.4);color:#fff;
+}
+
+/* ── MARIO PROGRESS TRACK ────────────────────────────── */
+.progress-track{
+  width:100%;max-width:100%;
+  background:transparent;
+  border-left:none;border-right:none;
+  border-bottom:4px solid rgba(0,0,0,0.4);
+  height:110px;position:relative;overflow:hidden;
+}
+/* ── DRAGON PROGRESS TRACK ───────────────────────────── */
+/* Ground row inside track — cracked stone path */
+.track-ground{
+  position:absolute;bottom:0;left:0;right:0;height:32px;
+  background:#3d2a1e;border-top:3px solid #2a1e14;
+  display:flex;
+}
+.track-ground-tile{
+  width:36px;height:29px;
+  background:linear-gradient(180deg,#4a3828 0%,#2d1e10 100%);
+  border-right:2px solid #2a1e14;flex-shrink:0;
+}
+/* Gem orb progress markers */
+.track-blocks{
+  position:absolute;bottom:28px;left:0;right:0;
+  display:flex;align-items:flex-end;padding:0 14px;gap:6px;
+}
+.track-block{
+  width:28px;height:28px;
+  border-radius:50%;
+  font-size:.7rem;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  transition:all .3s;
+  border:2px solid rgba(255,255,255,0.2);
+}
+.track-block.empty{
+  background:rgba(0,0,0,0.3);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.5);
+}
+.track-block.filled{
+  background:radial-gradient(circle at 35% 35%, #aaffee, #00ccaa 50%, #006655);
+  box-shadow:0 0 10px #00ffcc, 0 0 20px rgba(0,255,200,0.4);
+  border:2px solid #00ffcc;
+  animation:gemGlow .3s ease;
+}
+@keyframes gemGlow{0%{transform:scale(1.5);}100%{transform:scale(1);}}
+
+/* Dragon Gate (replaces pipe door) */
+.track-door{
+  position:absolute;right:10px;bottom:28px;
+  width:44px;height:58px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  font-size:2.2rem;line-height:1;
+  filter:drop-shadow(0 0 8px var(--w-accent));
+}
+.track-door::before{display:none;}
+.track-door-star{
+  font-size:1.8rem;
+  animation:gateGlow 1.2s ease-in-out infinite alternate;
+}
+@keyframes gateGlow{from{filter:brightness(1) drop-shadow(0 0 4px gold);}to{filter:brightness(1.4) drop-shadow(0 0 12px gold);}}
+
+/* Dragon rider on track */
+.track-mario{
+  position:absolute;bottom:28px;
+  font-size:2rem;line-height:1;
+  transition:left .4s cubic-bezier(.34,1.56,.64,1);
+  z-index:2;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.7));
+  width:52px;height:62px;
+}
+/* Gem pop animation */
+.coin-pop{
+  position:absolute;font-size:1.4rem;pointer-events:none;z-index:5;
+  animation:coinPop .7s ease-out forwards;
+}
+@keyframes coinPop{
+  0%  {transform:translateY(0) scale(1);opacity:1;}
+  60% {transform:translateY(-55px) scale(1.4);opacity:1;}
+  100%{transform:translateY(-90px) scale(.8);opacity:0;}
+}
+/* Magic burst on correct */
+.star-burst{
+  position:absolute;font-size:1.2rem;pointer-events:none;z-index:5;
+  animation:starBurst .5s ease-out forwards;
+}
+@keyframes starBurst{
+  0%  {transform:scale(0);opacity:1;}
+  60% {transform:scale(1.6);opacity:1;}
+  100%{transform:scale(.5);opacity:0;}
+}
+
+/* ── QUESTION CARD ───────────────────────────────────── */
+.qcard{
+  width:100%;max-width:100%;
+  background:rgba(0,0,0,0.38);
+  color:var(--w-card-text);
+  border:none;border-top:1px solid rgba(255,255,255,0.1);
+  box-shadow:none;
+  padding:1.2rem 1.4rem 1.4rem;
+  flex:1;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+
+/* Coin progress row */
+.coin-progress-row{
+  display:flex;gap:6px;align-items:center;margin-bottom:.7rem;flex-wrap:wrap;
+}
+.cp{
+  font-size:1.5rem;
+  filter:grayscale(1) brightness(1.7) opacity(.5);
+  transition:filter .25s,transform .2s;
+  position:relative;
+}
+.cp.lit{filter:none;transform:scale(1.2);}
+.cp-label{
+  font-family:'Press Start 2P',monospace;font-size:.5rem;
+  color:rgba(255,255,255,0.7);margin-left:auto;letter-spacing:1px;
+}
+.q-num{
+  font-family:'Press Start 2P',monospace;font-size:.5rem;
+  color:rgba(255,255,255,0.5);text-align:right;margin-bottom:.5rem;letter-spacing:1px;
+}
+
+/* Type badge */
+.type-badge{
+  font-family:'Press Start 2P',monospace;
+  font-size:.52rem;letter-spacing:1px;
+  padding:.3rem .7rem;border:3px solid #1a0800;
+  display:inline-block;margin-bottom:.55rem;
+}
+.tbadge-vocab  {background:#ddeeff;color:#003080;}
+.tbadge-grammar{background:#fff0cc;color:#805000;}
+.tbadge-builder{background:#ddffe0;color:#004400;}
+.tbadge-comp   {background:#ffe0f0;color:#800040;}
+
+/* Comprehension context */
+.comp-context{
+  background:rgba(0,0,0,0.3);
+  border-left:3px solid var(--w-accent);
+  padding:.9rem 1rem;margin-bottom:.7rem;
+  font-size:1.05rem;font-weight:700;
+  line-height:1.7;color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+}
+
+/* Prompt box */
+.prompt-box{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.18);
+  padding:1.6rem 1.4rem;margin-bottom:1rem;
+  text-align:center;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+.prompt-dir{
+  font-family:'Press Start 2P',monospace;
+  font-size:.65rem;color:var(--w-accent2);
+  letter-spacing:3px;margin-bottom:.65rem;
+  text-shadow:0 0 8px rgba(255,255,255,0.3);
+}
+.prompt-q{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.6rem,4.5vw,2.6rem);
+  color:#fff;line-height:1.3;
+  text-shadow:0 2px 12px rgba(0,0,0,0.7);
+}
+
+/* ── ANSWER BUTTONS ──────────────────────────────────── */
+.ans-grid{display:grid;gap:.6rem;}
+.ans-grid.g2{grid-template-columns:1fr 1fr;}
+.ans-grid.g1{grid-template-columns:1fr;}
+
+.ans-btn{
+  font-family:'Nunito',sans-serif;
+  font-weight:900;
+  font-size:clamp(1.1rem,3vw,1.5rem);
+  padding:1.1rem .8rem;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,255,255,0.25);
+  box-shadow:none;
+  color:#fff;
+  cursor:pointer;
+  text-align:center;
+  line-height:1.3;
+  transition:transform .08s,background .1s,border-color .1s;
+  position:relative;overflow:hidden;
+  min-height:70px;
+  display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+}
+.ans-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,transparent 55%);
+  pointer-events:none;
+}
+.ans-btn:hover:not(:disabled){
+  background:rgba(var(--w-accent-rgb,232,160,0),0.45);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.2);
+  border-color:var(--w-accent2);
+}
+.ans-btn:active:not(:disabled){transform:translateY(0);}
+.ans-btn.correct{
+  background:rgba(0,180,0,0.7)!important;color:#fff!important;
+  border-color:#00ff88!important;
+  box-shadow:0 0 20px rgba(0,255,136,.5)!important;
+}
+.ans-btn.wrong{
+  background:rgba(180,0,0,0.7)!important;color:#fff!important;
+  border-color:#ff4466!important;
+  box-shadow:0 0 20px rgba(255,0,60,.4)!important;
+  animation:btnShake .35s ease;
+}
+.ans-btn:disabled{cursor:default;}
+@keyframes btnShake{0%,100%{transform:translateX(2px);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* ── SENTENCE BUILDER ────────────────────────────────── */
+.build-area{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  min-height:64px;
+  border:1px dashed rgba(255,255,255,0.25);
+  padding:.7rem;margin-bottom:.6rem;
+  background:rgba(0,0,0,0.18);align-items:center;
+  transition:border-color .2s,background .2s;
+}
+.build-area.ok  {background:rgba(0,150,60,0.3);border-color:#00ff88;border-style:solid;}
+.build-area.bad {background:rgba(180,0,0,0.3);border-color:#ff4466;border-style:solid;}
+.build-placeholder{font-size:.9rem;color:rgba(255,255,255,0.4);font-style:italic;font-family:'Nunito',sans-serif;}
+
+.word-bank-wrap{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem;}
+.word-chip{
+  font-family:'Nunito',sans-serif;font-weight:900;
+  font-size:1.1rem;
+  padding:.45rem .85rem;
+  background:rgba(0,0,0,0.5);
+  border:2px solid var(--w-accent);
+  color:#fff;
+  cursor:pointer;
+  transition:transform .08s,opacity .2s,background .1s;
+  user-select:none;
+  text-shadow:0 1px 3px rgba(0,0,0,0.6);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.word-chip:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px);}
+.word-chip.used{opacity:.25;pointer-events:none;}
+.word-chip.in-answer{
+  background:rgba(0,150,60,0.5);border-color:#00ff88;color:#aaffcc;
+}
+
+.build-actions{display:flex;gap:.6rem;flex-wrap:wrap;}
+.build-btn{
+  font-family:'Fredoka One',cursive;font-size:1.1rem;
+  padding:.52rem 1.4rem;border:3px solid #1a0800;cursor:pointer;
+  transition:transform .08s,box-shadow .08s;
+}
+.build-btn.check{background:#00a800;color:#fff;box-shadow:4px 4px 0 #004400;}
+.build-btn.clear{background:#f8c800;color:#1a0800;box-shadow:4px 4px 0 #806000;}
+.build-btn:hover{transform:translate(1px,1px);}
+.build-btn:disabled{opacity:.5;cursor:default;}
+
+/* ── FEEDBACK ────────────────────────────────────────── */
+.feedback{
+  font-family:'Fredoka One',cursive;
+  font-size:1.25rem;min-height:1.8em;
+  text-align:center;margin-top:.6rem;color:rgba(255,255,255,0.9);
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+}
+.feedback.good{color:#00ff88;text-shadow:0 0 12px rgba(0,255,136,.5);}
+.feedback.bad {color:#ff6666;text-shadow:0 0 12px rgba(255,60,60,.5);}
+
+/* ══════════════════════════════════════
+   CLEAR OVERLAY
+══════════════════════════════════════ */
+#clear-ov{
+  position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.6rem;text-align:center;padding:2rem;
+}
+#clear-ov.show{display:flex;}
+.cl-icon{font-size:7rem;animation:zoomIn .4s cubic-bezier(.36,2,.5,.9);}
+@keyframes zoomIn{from{transform:scale(.2);}to{transform:scale(1);}}
+.cl-coins{font-size:2.8rem;letter-spacing:8px;margin-bottom:.2rem;}
+.cl-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(2.5rem,9vw,4.5rem);
+  color:#f8d800;text-shadow:5px 5px 0 #1a0800;letter-spacing:3px;
+  line-height:1.1;
+}
+.cl-sub{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(.55rem,1.8vw,.85rem);
+  color:#ddd;letter-spacing:2px;line-height:2.2;
+}
+.cl-btn{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.4rem,4vw,2rem);
+  padding:1rem 3rem;background:#f8c800;color:#1a0800;
+  border:5px solid #1a0800;box-shadow:7px 7px 0 #1a0800;
+  cursor:pointer;margin-top:.3rem;
+  transition:transform .08s,box-shadow .08s;
+  letter-spacing:2px;
+}
+.cl-btn:hover{transform:translate(3px,3px);box-shadow:4px 4px 0 #1a0800;}
+
+/* ══════════════════════════════════════
+   TIMEOUT OVERLAY
+══════════════════════════════════════ */
+#timeout-ov{
+  position:fixed;inset:0;z-index:500;background:#aa0000;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.8rem;text-align:center;padding:2rem;
+}
+#timeout-ov.show{display:flex;}
+.to-skull{font-size:8rem;animation:skullShake .4s ease;}
+@keyframes skullShake{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+.to-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(3.5rem,12vw,6rem);
+  color:#fff;text-shadow:6px 6px 0 #400;letter-spacing:3px;
+  line-height:1.1;
+}
+.to-sub{
+  font-family:'Press Start 2P',monospace;
+  font-size:clamp(.6rem,2vw,.9rem);
+  color:#ffcccc;letter-spacing:2px;line-height:2.2;
+}
+.to-btn{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.4rem,4vw,2rem);
+  padding:1rem 3rem;background:#fff;color:#800000;
+  border:5px solid #400;box-shadow:7px 7px 0 #400;cursor:pointer;
+  transition:transform .08s,box-shadow .08s;
+  letter-spacing:2px;
+}
+.to-btn:hover{transform:translate(3px,3px);box-shadow:4px 4px 0 #400;}
+
+/* ══════════════════════════════════════
+   WIN SCREEN
+══════════════════════════════════════ */
+#win-screen{justify-content:center;gap:.9rem;text-align:center;}
+.win-trophy{font-size:8rem;animation:bounceY .65s ease-in-out infinite alternate;}
+.win-title{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(2rem,7vw,3.5rem);
+  color:#d01000;text-shadow:4px 4px 0 #fff,6px 6px 0 #800000;
+  letter-spacing:2px;line-height:1.2;
+}
+.coin-burst{font-size:2.2rem;letter-spacing:8px;margin:.3rem 0;}
+.stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:.6rem;
+  max-width:560px;width:100%;margin:.3rem 0;
+}
+.stat-box{
+  background:#fff9d4;border:4px solid #1a0800;box-shadow:4px 4px 0 #1a0800;
+  padding:.9rem 1rem;
+}
+.stat-label{font-family:'Press Start 2P',monospace;font-size:clamp(.38rem,1.2vw,.55rem);color:#888;letter-spacing:1px;margin-bottom:.4rem;}
+.stat-val{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,4vw,2.2rem);color:#d01000;}
+.star-row{font-size:3rem;letter-spacing:8px;margin:.2rem 0;}
+.win-msg{
+  font-family:'Nunito',sans-serif;font-weight:800;
+  font-size:clamp(1rem,2.5vw,1.3rem);max-width:520px;line-height:1.6;
+  background:#fff;border:4px solid #1a0800;box-shadow:4px 4px 0 #1a0800;
+  padding:1rem 1.2rem;color:#1a0800;
+}
+.win-btn{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.4rem,4vw,2rem);
+  padding:1rem 3rem;background:#d01000;color:#fff;
+  border:5px solid #1a0800;box-shadow:7px 7px 0 #1a0800;cursor:pointer;
+  transition:transform .08s,box-shadow .08s;margin-top:.3rem;
+  letter-spacing:2px;
+}
+.win-btn:hover{transform:translate(3px,3px);box-shadow:4px 4px 0 #1a0800;}
+
+/* ── NAME ENTRY ──────────────────────────────────────── */
+.name-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:.5rem;
+  max-width:520px;width:100%;margin:.3rem 0;
+}
+.name-label{
+  font-family:'Press Start 2P',monospace;font-size:.5rem;
+  color:#fff;letter-spacing:2px;
+  text-shadow:0 2px 6px rgba(0,0,0,0.8);
+}
+.name-input{
+  font-family:'Fredoka One',cursive;font-size:1.4rem;
+  width:100%;max-width:340px;
+  padding:.6rem 1rem;
+  border:4px solid #1a0800;box-shadow:5px 5px 0 #1a0800;
+  background:#fff9e0;color:#1a0800;
+  text-align:center;letter-spacing:1px;outline:none;
+}
+.name-input:focus{border-color:#d01000;box-shadow:5px 5px 0 #d01000;}
+.name-input::placeholder{color:#bbb;font-size:1.1rem;}
+
+/* ── PRINT BUTTON ────────────────────────────────────── */
+.print-btn{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.2rem,3.5vw,1.6rem);
+  padding:.8rem 2.5rem;background:#00a800;color:#fff;
+  border:5px solid #1a0800;box-shadow:7px 7px 0 #1a0800;cursor:pointer;
+  transition:transform .08s,box-shadow .08s;letter-spacing:2px;
+}
+.print-btn:hover{background:#00c828;transform:translate(3px,3px);box-shadow:4px 4px 0 #1a0800;}
+
+/* ── PRINT STYLES ────────────────────────────────────── */
+@media print{
+  body *{visibility:hidden;}
+  #print-area,#print-area *{visibility:visible;}
+  #print-area{
+    position:fixed;inset:0;
+    display:flex!important;flex-direction:column;align-items:center;
+    justify-content:center;padding:2rem;
+    background:#fff;font-family:'Nunito',sans-serif;
+  }
+}
+#print-area{display:none;}
+/* ══════════════════════════════════════
+   PARALLAX LAIR BACKGROUNDS
+══════════════════════════════════════ */
+.parallax-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:1;
+  transition:opacity .6s;
+}
+/* Far layer — slow drift */
+.parallax-far{animation:driftFar 20s ease-in-out infinite alternate;}
+@keyframes driftFar{from{transform:translateX(0);}to{transform:translateX(-18px);}}
+/* Mid layer — medium drift */
+.parallax-mid{animation:driftMid 14s ease-in-out infinite alternate;}
+@keyframes driftMid{from{transform:translateX(0);}to{transform:translateX(-32px);}}
+/* Near layer — fastest drift */
+.parallax-near{animation:driftNear 9s ease-in-out infinite alternate;}
+@keyframes driftNear{from{transform:translateX(0);}to{transform:translateX(-48px);}}
+
+/* ══════════════════════════════════════
+   SCREEN FADE TRANSITIONS
+══════════════════════════════════════ */
+.screen-fade{
+  position:fixed;inset:0;z-index:600;
+  background:#000;opacity:0;pointer-events:none;
+  transition:opacity .35s ease;
+}
+.screen-fade.active{opacity:1;pointer-events:all;}
+
+/* ══════════════════════════════════════
+   QUESTION CARD ENTRANCE
+══════════════════════════════════════ */
+@keyframes cardEntrance{
+  0%  {transform:translateY(28px);opacity:0;}
+  60% {transform:translateY(-6px);opacity:1;}
+  100%{transform:translateY(0);opacity:1;}
+}
+.qcard.entering{animation:cardEntrance .38s cubic-bezier(.22,1,.36,1) forwards;}
+
+/* ══════════════════════════════════════
+   GEM ORB RIPPLE
+══════════════════════════════════════ */
+@keyframes gemRipple{
+  0%  {box-shadow:0 0 0 0 rgba(0,255,200,.8),0 0 10px #00ffcc;}
+  60% {box-shadow:0 0 0 14px rgba(0,255,200,0),0 0 20px rgba(0,255,200,.4);}
+  100%{box-shadow:0 0 0 0 rgba(0,255,200,0),0 0 10px #00ffcc;}
+}
+.track-block.rippling{animation:gemRipple .6s ease-out;}
+
+/* ══════════════════════════════════════
+   DRAGON GATE LIFT
+══════════════════════════════════════ */
+@keyframes gateLift{
+  0%  {transform:translateY(0);}
+  40% {transform:translateY(-8px) scale(1.15);}
+  70% {transform:translateY(-4px) scale(1.1) rotate(-5deg);}
+  100%{transform:translateY(-12px) scale(1.2);}
+}
+.track-door.open .track-door-star{
+  animation:gateLift .5s cubic-bezier(.34,1.56,.64,1) forwards;
+  display:block;
+}
+
+/* ══════════════════════════════════════
+/* ══════════════════════════════════════
+   WORLD INTRO OVERLAY UPGRADE
+══════════════════════════════════════ */
+#wi-name{font-family:'Cinzel',serif!important;}
+#wi-num{font-family:'Cinzel',serif!important;}
+
+@media(max-width:600px){
+  .ans-grid.g2{grid-template-columns:1fr;}
+  .diff-row{grid-template-columns:1fr;}
+  .world-preview,.stats-grid{grid-template-columns:1fr;}
+  .ans-btn{font-size:1rem;padding:.9rem .6rem;min-height:58px;}
+}
+@keyframes blink2{50%{opacity:0;}}
+</style>
+</head>
+<body>
+<div class="cloud-layer" id="cloud-layer"></div>
+<!-- PARALLAX LAYERS (filled by JS per lair) -->
+<div class="parallax-layer parallax-far" id="parallax-far"></div>
+<div class="parallax-layer parallax-mid" id="parallax-mid"></div>
+<div class="parallax-layer parallax-near" id="parallax-near"></div>
+<!-- SCREEN FADE OVERLAY -->
+<div class="screen-fade" id="screen-fade"></div>
+<div class="ground" id="ground-strip"></div>
+
+<!-- ════════════════════════════════════
+     TITLE SCREEN
+════════════════════════════════════ -->
+<div id="title-screen" class="screen active">
+
+  <!-- SVG LOGO -->
+  <div class="logo-wrap">
+    <svg class="logo-svg" viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffe066"/>
+      <stop offset="0.5" stop-color="#f8a800"/>
+      <stop offset="1" stop-color="#c06000"/>
+    </linearGradient>
+    <linearGradient id="lr" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ff6644"/>
+      <stop offset="1" stop-color="#990000"/>
+    </linearGradient>
+    <filter id="gf"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="sf"><feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="#000" flood-opacity=".6"/></filter>
+  </defs>
+
+  <!-- LEFT DRAGON (facing right) -->
+  <g transform="translate(8,10)" filter="url(#sf)">
+    <!-- tail -->
+    <path d="M10,110 Q0,130 8,145 Q14,125 22,115Z" fill="#8b1a00"/>
+    <!-- body -->
+    <ellipse cx="38" cy="95" rx="28" ry="20" fill="#a02000"/>
+    <!-- belly lighter -->
+    <ellipse cx="38" cy="98" rx="18" ry="12" fill="#cc3300" opacity=".5"/>
+    <!-- wing left -->
+    <path d="M22,80 Q2,48 14,22 Q22,52 34,66Z" fill="#7a1400"/>
+    <path d="M22,80 Q8,55 16,32 Q22,56 32,68Z" fill="#a02000" opacity=".4"/>
+    <!-- wing veins -->
+    <path d="M22,80 L14,22 M22,80 L8,38 M22,80 L5,54" stroke="#cc3300" stroke-width=".8" opacity=".4"/>
+    <!-- neck -->
+    <path d="M52,78 Q60,60 62,40 Q54,55 48,72Z" fill="#a02000"/>
+    <!-- back spines -->
+    <path d="M42,74 L38,62 L44,72" fill="#cc2200"/>
+    <path d="M48,72 L46,58 L52,70" fill="#cc2200"/>
+    <path d="M54,68 L54,53 L58,67" fill="#cc2200"/>
+    <!-- head -->
+    <ellipse cx="68" cy="32" rx="18" ry="13" fill="#bb2800" transform="rotate(10,68,32)"/>
+    <!-- jaw -->
+    <path d="M56,38 Q68,48 82,40 Q78,36 68,34 Q58,34 56,38Z" fill="#8b1a00"/>
+    <!-- snout -->
+    <ellipse cx="82" cy="30" rx="12" ry="7" fill="#a02000" transform="rotate(5,82,30)"/>
+    <!-- nostril -->
+    <ellipse cx="86" cy="28" rx="2" ry="1.5" fill="#660000"/>
+    <!-- eye -->
+    <circle cx="70" cy="26" r="5" fill="#ffcc00" filter="url(#gf)"/>
+    <circle cx="70" cy="26" r="3" fill="#ff6600"/>
+    <circle cx="70" cy="26" r="1.5" fill="#000"/>
+    <circle cx="69" cy="25" r=".8" fill="#fff"/>
+    <!-- brow ridge -->
+    <path d="M66,22 Q70,20 74,22" stroke="#660000" stroke-width="2" fill="none"/>
+    <!-- flame from mouth -->
+    <path d="M90,26 Q102,14 96,6 Q98,16 94,22 Q104,10 98,20 Q106,12 100,24 Q96,28 90,26Z" fill="#ff6600" filter="url(#gf)"/>
+    <path d="M92,24 Q100,14 97,10 Q98,18 94,22Z" fill="#ffcc00" opacity=".8"/>
+    <!-- horns -->
+    <path d="M64,20 L60,8 L66,18" fill="#660000"/>
+    <path d="M70,19 L68,6 L73,17" fill="#7a0000"/>
+    <!-- front leg -->
+    <path d="M30,110 Q24,122 20,132" stroke="#8b1a00" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M18,132 L14,138 M20,133 L17,140 M23,132 L22,139" stroke="#ffcc00" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- back leg -->
+    <path d="M48,112 Q46,124 44,134" stroke="#7a1400" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M42,134 L38,140 M45,135 L43,141 M48,134 L48,141" stroke="#ffcc00" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- TEXT: DRAGON ACADEMY -->
+  <text x="300" y="62" font-family="Cinzel,serif" font-size="34" font-weight="900"
+        fill="url(#lg)" text-anchor="middle" filter="url(#sf)" letter-spacing="5">DRAGON ACADEMY</text>
+
+  <!-- TEXT: ESPAÑOL -->
+  <text x="300" y="118" font-family="Cinzel,serif" font-size="58" font-weight="900"
+        fill="url(#lr)" text-anchor="middle" filter="url(#sf)" letter-spacing="2">ESPAÑOL</text>
+
+  <!-- Decorative lines -->
+  <line x1="140" y1="128" x2="460" y2="128" stroke="url(#lg)" stroke-width="1.5" opacity=".6"/>
+  <text x="300" y="150" font-family="Cinzel,serif" font-size="12"
+        fill="#ffcc88" text-anchor="middle" letter-spacing="7" opacity=".8">ESCAPE ROOM · VIVA 1</text>
+
+  <!-- RIGHT DRAGON (mirrored, facing left) -->
+  <g transform="translate(592,10) scale(-1,1)" filter="url(#sf)">
+    <path d="M10,110 Q0,130 8,145 Q14,125 22,115Z" fill="#8b1a00"/>
+    <ellipse cx="38" cy="95" rx="28" ry="20" fill="#a02000"/>
+    <ellipse cx="38" cy="98" rx="18" ry="12" fill="#cc3300" opacity=".5"/>
+    <path d="M22,80 Q2,48 14,22 Q22,52 34,66Z" fill="#7a1400"/>
+    <path d="M22,80 Q8,55 16,32 Q22,56 32,68Z" fill="#a02000" opacity=".4"/>
+    <path d="M22,80 L14,22 M22,80 L8,38 M22,80 L5,54" stroke="#cc3300" stroke-width=".8" opacity=".4"/>
+    <path d="M52,78 Q60,60 62,40 Q54,55 48,72Z" fill="#a02000"/>
+    <path d="M42,74 L38,62 L44,72" fill="#cc2200"/>
+    <path d="M48,72 L46,58 L52,70" fill="#cc2200"/>
+    <path d="M54,68 L54,53 L58,67" fill="#cc2200"/>
+    <ellipse cx="68" cy="32" rx="18" ry="13" fill="#bb2800" transform="rotate(10,68,32)"/>
+    <path d="M56,38 Q68,48 82,40 Q78,36 68,34 Q58,34 56,38Z" fill="#8b1a00"/>
+    <ellipse cx="82" cy="30" rx="12" ry="7" fill="#a02000" transform="rotate(5,82,30)"/>
+    <ellipse cx="86" cy="28" rx="2" ry="1.5" fill="#660000"/>
+    <circle cx="70" cy="26" r="5" fill="#ffcc00" filter="url(#gf)"/>
+    <circle cx="70" cy="26" r="3" fill="#ff6600"/>
+    <circle cx="70" cy="26" r="1.5" fill="#000"/>
+    <circle cx="69" cy="25" r=".8" fill="#fff"/>
+    <path d="M66,22 Q70,20 74,22" stroke="#660000" stroke-width="2" fill="none"/>
+    <path d="M90,26 Q102,14 96,6 Q98,16 94,22 Q104,10 98,20 Q106,12 100,24 Q96,28 90,26Z" fill="#ff6600" filter="url(#gf)"/>
+    <path d="M92,24 Q100,14 97,10 Q98,18 94,22Z" fill="#ffcc00" opacity=".8"/>
+    <path d="M64,20 L60,8 L66,18" fill="#660000"/>
+    <path d="M70,19 L68,6 L73,17" fill="#7a0000"/>
+    <path d="M30,110 Q24,122 20,132" stroke="#8b1a00" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M18,132 L14,138 M20,133 L17,140 M23,132 L22,139" stroke="#ffcc00" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M48,112 Q46,124 44,134" stroke="#7a1400" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M42,134 L38,140 M45,135 L43,141 M48,134 L48,141" stroke="#ffcc00" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>
+  </div>
+
+  <div class="story-card">
+    <strong>🐉 THE SORCERER HAS STOLEN THE SPANISH SCROLLS!</strong><br><br>
+    You are a trainee dragon rider at the Academy. Prove your Spanish knowledge to unlock the <strong>4 dragon lairs</strong>. Each lair has <strong>8 challenges</strong> — vocab, grammar, sentence building, and comprehension. Collect all 8 gems 💎 to unlock the next lair!
+  </div>
+
+  <!-- DIFFICULTY PICKER -->
+  <div class="diff-label">⚙ CHOOSE YOUR DIFFICULTY:</div>
+  <div class="diff-row">
+    <div class="item-box diff-easy selected" data-diff="easy" onclick="selectDiff(this,'easy')">
+      <span class="item-check">✅</span>
+      <span class="item-icon">🪙</span>
+      <span class="item-name">EASY</span>
+      <div class="item-details">Simple vocab<br>3 choices<br>No timer</div>
+    </div>
+    <div class="item-box diff-mid" data-diff="mid" onclick="selectDiff(this,'mid')">
+      <span class="item-check">✅</span>
+      <span class="item-icon">⭐</span>
+      <span class="item-name">NORMAL</span>
+      <div class="item-details">Vocab + grammar<br>4 choices<br>⏱ 45 sec per question</div>
+    </div>
+    <div class="item-box diff-hard" data-diff="hard" onclick="selectDiff(this,'hard')">
+      <span class="item-check">✅</span>
+      <span class="item-icon">🔥</span>
+      <span class="item-name">HARD</span>
+      <div class="item-details">All question types<br>5 choices · Spanish prompts<br>⏱ 20 sec per question</div>
+    </div>
+  </div>
+
+  <!-- WORLD PREVIEW — Shift+click any card to jump straight to that world -->
+  <div class="world-preview">
+    <div class="wpreview-card" data-world="0" onclick="handlePreviewClick(event,0)"><span class="wpreview-icon">🔥</span>
+      <div class="wpreview-text"><div class="wpreview-num">LAIR 1</div><div>Fire Dragon's Den</div></div></div>
+    <div class="wpreview-card" data-world="1" onclick="handlePreviewClick(event,1)"><span class="wpreview-icon">❄️</span>
+      <div class="wpreview-text"><div class="wpreview-num">LAIR 2</div><div>Ice Dragon's Palace</div></div></div>
+    <div class="wpreview-card" data-world="2" onclick="handlePreviewClick(event,2)"><span class="wpreview-icon">🌿</span>
+      <div class="wpreview-text"><div class="wpreview-num">LAIR 3</div><div>Forest Dragon's Fortress</div></div></div>
+    <div class="wpreview-card" data-world="3" onclick="handlePreviewClick(event,3)"><span class="wpreview-icon">💀</span>
+      <div class="wpreview-text"><div class="wpreview-num">LAIR 4 🔥</div><div>Shadow Dragon's Lair</div></div></div>
+  </div>
+
+  <div class="name-wrap">
+    <div class="name-label">👾 ENTER YOUR NAME:</div>
+    <input class="name-input" id="player-name" type="text" maxlength="20" placeholder="Type your name…" autocomplete="off">
+  </div>
+
+  <button class="start-btn" id="start-btn">▶ ENTER THE ACADEMY!</button>
+  <div style="font-family:'Press Start 2P',monospace;font-size:.38rem;color:#1a0800;opacity:.5;margin-top:.4rem;letter-spacing:1px;">
+    📘 VOCAB &nbsp; 📝 GRAMMAR &nbsp; 🧩 BUILD &nbsp; 📖 READ
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     ROOM SCREEN
+════════════════════════════════════ -->
+<div id="room-screen" class="screen">
+  <!-- HUD -->
+  <div class="hud">
+    <span class="hud-world" id="hud-world">LAIR 1</span>
+    <span class="hud-coins" id="hud-coins">💎 ×0</span>
+    <span class="hud-diff-badge easy" id="hud-diff">🔥 LAIR 1</span>
+    <span class="hud-timer" id="hud-timer">⏱ —</span>
+    <button class="hud-home-btn" id="hud-home-btn" title="Return to menu">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+      </svg>
+    </button>
+  </div>
+  <div class="timer-bar-wrap" id="timer-bar-wrap">
+    <div class="timer-bar-fill" id="timer-bar-fill" style="width:100%"></div>
+  </div>
+
+  <!-- World banner -->
+  <div class="wbanner">
+    <div class="wbanner-title" id="banner-title">GREETINGS CASTLE</div>
+    <div class="wbanner-right">
+      <div class="wbanner-qtype" id="banner-qtype">📘 VOCAB</div>
+      <span id="banner-emoji-extra" style="font-size:1.4rem;">☀️</span>
+      <div class="wbanner-icon" id="banner-icon">👋</div>
+    </div>
+  </div>
+
+  <!-- Dragon progress track -->
+  <div class="progress-track" id="progress-track">
+    <div class="track-mario" id="track-mario">🧑</div>
+    <div class="track-blocks" id="track-blocks"></div>
+    <div class="track-door" id="track-door">
+      <div class="track-door-star">🏰</div>
+    </div>
+    <div class="track-ground" id="track-ground"></div>
+  </div>
+
+  <!-- Question card -->
+  <div class="qcard">
+    <div class="coin-progress-row" id="coin-progress-row"></div>
+    <div class="q-num" id="q-num">Q 1 OF 8</div>
+    <div id="q-area"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<!-- HOME CONFIRM OVERLAY -->
+<div id="home-confirm-ov">
+  <div class="hc-icon">🏠</div>
+  <div class="hc-title">Return to Menu?</div>
+  <div class="hc-sub">Your progress in this lair will be lost.</div>
+  <div class="hc-btns">
+    <button class="hc-btn-yes" id="hc-yes">✓ YES, GO HOME</button>
+    <button class="hc-btn-no" id="hc-no">✗ KEEP PLAYING</button>
+  </div>
+</div>
+
+<!-- CLEAR OVERLAY -->
+<div id="clear-ov">
+  <div class="cl-coins" id="cl-coins">💎💎💎💎💎💎💎💎</div>
+  <div class="cl-icon" id="cl-icon">🚪</div>
+  <div class="cl-title" id="cl-title">DOOR UNLOCKED!</div>
+  <div class="cl-sub" id="cl-sub">Heading to World 1-2…</div>
+  <button class="cl-btn" id="next-btn">NEXT WORLD ▶</button>
+</div>
+
+<!-- TIMEOUT OVERLAY -->
+<div id="timeout-ov">
+  <div class="to-skull">💀</div>
+  <div class="to-title">TIME'S UP!</div>
+  <div class="to-sub" id="to-sub">The Sorcerer got you!<br>Try this lair again…</div>
+  <button class="to-btn" id="retry-btn">↩ TRY AGAIN</button>
+</div>
+
+<!-- WIN SCREEN -->
+<div id="win-screen" class="screen">
+  <div class="win-trophy">🐉</div>
+  <div class="win-title" id="win-title">You Recovered the<br>Spanish Scrolls!</div>
+  <div class="coin-burst">💎💎💎💎💎</div>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-label">TOTAL TIME</div><div class="stat-val" id="win-time">0:00</div></div>
+    <div class="stat-box"><div class="stat-label">WRONG ANS.</div><div class="stat-val" id="win-wrong" style="color:#cc0000">0</div></div>
+    <div class="stat-box"><div class="stat-label">WORLDS DONE</div><div class="stat-val">4 / 4</div></div>
+    <div class="stat-box"><div class="stat-label">DIFFICULTY</div><div class="stat-val" id="win-diff" style="font-size:.9rem">🍄 EASY</div></div>
+  </div>
+  <div class="star-row" id="win-stars">⭐⭐⭐</div>
+  <div class="win-msg" id="win-msg">Amazing!</div>
+  <div style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem;">
+    <button class="win-btn" id="play-again-btn">↩ PLAY AGAIN</button>
+    <button class="print-btn" id="print-btn">🖨 PRINT RESULTS</button>
+  </div>
+</div>
+
+<!-- HIDDEN PRINT AREA -->
+<div id="print-area">
+  <div style="text-align:center;font-family:sans-serif;">
+    <div style="font-size:4rem;margin-bottom:.5rem;">🐉</div>
+    <h1 id="print-name" style="font-size:2.5rem;margin-bottom:.3rem;color:#d01000;"></h1>
+    <h2 style="font-size:1.2rem;color:#555;margin-bottom:1.5rem;font-weight:normal;">Dragon Academy Español · Viva 1 Módulo 1</h2>
+    <div id="print-stars" style="font-size:3rem;margin-bottom:1rem;"></div>
+    <table style="border-collapse:collapse;margin:0 auto 1.5rem;min-width:320px;">
+      <tr>
+        <td style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1rem;color:#555;">Total Time</td>
+        <td id="print-time" style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1.2rem;font-weight:bold;"></td>
+      </tr>
+      <tr>
+        <td style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1rem;color:#555;">Wrong Answers</td>
+        <td id="print-wrong" style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1.2rem;font-weight:bold;color:#cc0000;"></td>
+      </tr>
+      <tr>
+        <td style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1rem;color:#555;">Difficulty</td>
+        <td id="print-diff" style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1.2rem;font-weight:bold;"></td>
+      </tr>
+      <tr>
+        <td style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1rem;color:#555;">Worlds Cleared</td>
+        <td style="padding:.6rem 1.5rem;border:2px solid #ccc;font-size:1.2rem;font-weight:bold;">4 / 4</td>
+      </tr>
+    </table>
+    <div id="print-msg" style="font-size:1.1rem;color:#444;max-width:400px;margin:0 auto;"></div>
+    <div style="margin-top:2rem;font-size:.8rem;color:#aaa;">Printed from Dragon Academy Español · Viva 1 Módulo 1</div>
+  </div>
+</div>
+
+<script>
+// ── Global UI handlers declared first so inline onclick attributes work ──
+var selectedDiff='easy';
+function selectDiff(el,d){
+  selectedDiff=d;
+  document.querySelectorAll('.item-box').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function handlePreviewClick(e,worldIdx){
+  if(!e.shiftKey) return;
+  wIdx=worldIdx; qIdx=0; coinsEarned=0; totalWrong=0;
+  activeSession=buildSession(worldIdx);
+  applyTheme(worldIdx); buildTrack(); startGlobal();
+  showScreen('room-screen'); renderQ();
+}
+
+// ═══════════════════════════════════
+//  DECOR — ground + track tiles
+// ═══════════════════════════════════
+(()=>{
+  const gs=document.getElementById('ground-strip');
+  for(let i=0;i<Math.ceil(window.innerWidth/52)+2;i++){
+    const t=document.createElement('div');t.className='ground-tile';gs.appendChild(t);
+  }
+  const tg=document.getElementById('track-ground');
+  for(let i=0;i<20;i++){const t=document.createElement('div');t.className='track-ground-tile';tg.appendChild(t);}
+})();
+
+// ═══════════════════════════════════
+//  SCREEN FADE TRANSITION
+// ═══════════════════════════════════
+function fadeTransition(cb){
+  const fade=document.getElementById('screen-fade');
+  fade.classList.add('active');
+  setTimeout(()=>{cb();fade.classList.remove('active');},360);
+}
+
+// ═══════════════════════════════════
+//  PARALLAX SVG BACKGROUNDS
+// ═══════════════════════════════════
+const PARALLAX=[
+  // LAIR 1: Fire Dragon
+  {
+    far:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:115%;height:100%"><defs><linearGradient id="f1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c84000"/><stop offset="1" stop-color="#3d0800"/></linearGradient></defs><rect width="1200" height="500" fill="url(#f1)"/><polygon points="0,500 80,220 160,380 260,180 360,340 460,200 560,360 660,170 760,320 860,190 960,340 1060,160 1160,300 1200,500" fill="#5c1000" opacity=".8"/><polygon points="0,500 100,280 200,420 300,240 400,380 500,220 600,400 700,200 800,360 900,220 1000,380 1100,200 1200,500" fill="#3d0800" opacity=".6"/><circle cx="900" cy="80" r="55" fill="#ff6600" opacity=".25"/><circle cx="900" cy="80" r="38" fill="#ff8800" opacity=".2"/></svg>`,
+    mid:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:55%"><ellipse cx="150" cy="200" rx="120" ry="60" fill="#4a1000" opacity=".9"/><ellipse cx="400" cy="220" rx="90" ry="45" fill="#3d0800" opacity=".85"/><ellipse cx="700" cy="210" rx="110" ry="55" fill="#4a1000" opacity=".9"/><ellipse cx="1000" cy="200" rx="100" ry="50" fill="#3d0800" opacity=".85"/><ellipse cx="250" cy="260" rx="60" ry="8" fill="#ff4400" opacity=".3"/><ellipse cx="600" cy="270" rx="50" ry="6" fill="#ff6600" opacity=".25"/><ellipse cx="900" cy="255" rx="70" ry="9" fill="#ff4400" opacity=".3"/></svg>`,
+    near:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:30%"><ellipse cx="80" cy="160" rx="80" ry="40" fill="#2d0800"/><ellipse cx="300" cy="170" rx="60" ry="30" fill="#1a0400"/><ellipse cx="550" cy="155" rx="90" ry="45" fill="#2d0800"/><ellipse cx="800" cy="165" rx="70" ry="35" fill="#1a0400"/><ellipse cx="1050" cy="158" rx="80" ry="40" fill="#2d0800"/><ellipse cx="1180" cy="170" rx="55" ry="28" fill="#1a0400"/></svg>`
+  },
+  // LAIR 2: Ice Dragon
+  {
+    far:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:115%;height:100%"><defs><linearGradient id="i1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a8d8f0"/><stop offset="1" stop-color="#c8ecff"/></linearGradient></defs><rect width="1200" height="500" fill="url(#i1)"/><ellipse cx="400" cy="120" rx="300" ry="30" fill="#88ffcc" opacity=".12" transform="rotate(-8,400,120)"/><ellipse cx="700" cy="90" rx="280" ry="22" fill="#aaeeff" opacity=".1" transform="rotate(5,700,90)"/><polygon points="0,500 100,200 200,400 320,160 440,360 560,140 680,320 800,150 920,340 1040,160 1160,320 1200,500" fill="#d8f0ff" opacity=".7"/><polygon points="0,500 80,260 180,420 300,200 420,380 540,180 660,360 780,190 900,360 1020,190 1140,360 1200,500" fill="#b8e0f8" opacity=".5"/></svg>`,
+    mid:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:55%"><rect x="0" y="180" width="1200" height="120" fill="#b8e8ff" opacity=".7"/><ellipse cx="200" cy="180" rx="180" ry="30" fill="#d8f4ff" opacity=".8"/><ellipse cx="600" cy="175" rx="200" ry="28" fill="#c8eeff" opacity=".75"/><ellipse cx="1000" cy="182" rx="170" ry="26" fill="#d0f0ff" opacity=".8"/></svg>`,
+    near:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:30%"><ellipse cx="60" cy="165" rx="65" ry="32" fill="#a0d8f0"/><ellipse cx="280" cy="172" rx="50" ry="25" fill="#88c8e8"/><ellipse cx="520" cy="160" rx="75" ry="38" fill="#a0d8f0"/><ellipse cx="780" cy="168" rx="60" ry="30" fill="#88c8e8"/><ellipse cx="1020" cy="163" rx="70" ry="35" fill="#a0d8f0"/><ellipse cx="1180" cy="170" rx="45" ry="22" fill="#88c8e8"/></svg>`
+  },
+  // LAIR 3: Forest Dragon
+  {
+    far:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:115%;height:100%"><defs><linearGradient id="g1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1a7a30"/><stop offset="1" stop-color="#0a3018"/></linearGradient></defs><rect width="1200" height="500" fill="url(#g1)"/><ellipse cx="150" cy="350" rx="180" ry="120" fill="#145e24" opacity=".8"/><ellipse cx="400" cy="320" rx="200" ry="130" fill="#1a7a30" opacity=".7"/><ellipse cx="650" cy="340" rx="180" ry="110" fill="#0f4a1c" opacity=".8"/><ellipse cx="900" cy="310" rx="220" ry="130" fill="#1a7a30" opacity=".7"/><ellipse cx="1120" cy="350" rx="160" ry="110" fill="#145e24" opacity=".8"/></svg>`,
+    mid:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:60%"><rect x="80" y="80" width="22" height="220" fill="#4a2800" rx="4"/><ellipse cx="91" cy="80" rx="55" ry="70" fill="#1a7a30"/><rect x="280" y="100" width="18" height="200" fill="#3d2000" rx="4"/><ellipse cx="289" cy="100" rx="48" ry="60" fill="#145e24"/><rect x="480" y="70" width="25" height="230" fill="#4a2800" rx="4"/><ellipse cx="492" cy="70" rx="60" ry="75" fill="#1a7a30"/><rect x="680" y="90" width="20" height="210" fill="#3d2000" rx="4"/><ellipse cx="690" cy="90" rx="52" ry="65" fill="#145e24"/><rect x="880" y="75" width="24" height="225" fill="#4a2800" rx="4"/><ellipse cx="892" cy="75" rx="58" ry="72" fill="#1a7a30"/><rect x="1060" y="85" width="20" height="215" fill="#3d2000" rx="4"/><ellipse cx="1070" cy="85" rx="50" ry="62" fill="#145e24"/></svg>`,
+    near:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:35%"><ellipse cx="100" cy="170" rx="100" ry="40" fill="#0a3018"/><ellipse cx="350" cy="175" rx="80" ry="35" fill="#0d3d1e"/><ellipse cx="600" cy="168" rx="110" ry="42" fill="#0a3018"/><ellipse cx="850" cy="173" rx="90" ry="38" fill="#0d3d1e"/><ellipse cx="1100" cy="170" rx="100" ry="40" fill="#0a3018"/></svg>`
+  },
+  // LAIR 4: Shadow Dragon
+  {
+    far:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:115%;height:100%"><defs><linearGradient id="s1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#0d0020"/><stop offset="1" stop-color="#1a0500"/></linearGradient></defs><rect width="1200" height="500" fill="url(#s1)"/><circle cx="30" cy="80" r="2" fill="#fff" opacity=".6"/><circle cx="120" cy="40" r="1.5" fill="#fff" opacity=".5"/><circle cx="200" cy="100" r="2" fill="#fff" opacity=".7"/><circle cx="350" cy="50" r="1" fill="#fff" opacity=".5"/><circle cx="450" cy="80" r="2" fill="#fff" opacity=".6"/><circle cx="600" cy="30" r="1.5" fill="#fff" opacity=".5"/><circle cx="750" cy="70" r="2" fill="#fff" opacity=".7"/><circle cx="900" cy="45" r="1" fill="#fff" opacity=".5"/><circle cx="1050" cy="90" r="2" fill="#fff" opacity=".6"/><circle cx="1150" cy="35" r="1.5" fill="#fff" opacity=".5"/><circle cx="200" cy="80" r="45" fill="#fffce8" opacity=".18"/><circle cx="215" cy="72" r="40" fill="#0d0020" opacity=".6"/><polygon points="0,500 100,250 200,420 320,200 440,380 560,180 680,360 800,200 920,380 1040,200 1160,360 1200,500" fill="#0d0020" opacity=".9"/><polygon points="0,500 80,300 180,440 300,240 420,400 540,220 660,400 780,230 900,400 1020,230 1140,400 1200,500" fill="#080010" opacity=".7"/></svg>`,
+    mid:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:55%"><rect x="60" y="80" width="28" height="220" fill="#1a1030" rx="3"/><rect x="55" y="76" width="38" height="12" fill="#241840" rx="2"/><rect x="280" y="110" width="24" height="190" fill="#150c28" rx="3"/><rect x="275" y="106" width="34" height="10" fill="#1e1436" rx="2"/><rect x="500" y="70" width="30" height="230" fill="#1a1030" rx="3"/><rect x="495" y="66" width="40" height="12" fill="#241840" rx="2"/><rect x="720" y="95" width="26" height="205" fill="#150c28" rx="3"/><rect x="715" y="91" width="36" height="11" fill="#1e1436" rx="2"/><rect x="940" y="75" width="30" height="225" fill="#1a1030" rx="3"/><rect x="935" y="71" width="40" height="12" fill="#241840" rx="2"/><ellipse cx="300" cy="290" rx="200" ry="25" fill="#4a0080" opacity=".15"/><ellipse cx="800" cy="295" rx="220" ry="22" fill="#4a0080" opacity=".12"/></svg>`,
+    near:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="xMidYMax slice" style="position:absolute;bottom:48px;left:0;width:115%;height:30%"><ellipse cx="80" cy="168" rx="80" ry="35" fill="#080010"/><ellipse cx="300" cy="172" rx="60" ry="28" fill="#0d0018"/><ellipse cx="560" cy="165" rx="90" ry="38" fill="#080010"/><ellipse cx="820" cy="170" rx="70" ry="32" fill="#0d0018"/><ellipse cx="1060" cy="166" rx="80" ry="36" fill="#080010"/><ellipse cx="1180" cy="172" rx="50" ry="24" fill="#0d0018"/></svg>`
+  }
+];
+
+function applyParallax(idx){
+  const p=PARALLAX[idx];
+  document.getElementById('parallax-far').innerHTML=p.far;
+  document.getElementById('parallax-mid').innerHTML=p.mid;
+  document.getElementById('parallax-near').innerHTML=p.near;
+}
+
+// ═══════════════════════════════════
+//  WORLD THEMES — full visual identity per world
+// ═══════════════════════════════════
+const THEMES = [
+  // ── LAIR 1: FIRE DRAGON'S DEN ─────────────────────────
+  // Volcanic orange sky, ember glow, scorched earth
+  {
+    sky:'#c84000', accent:'#ff8c00', accent2:'#ffcc00',
+    btn:'#ffcc00', btnShadow:'#a05000',
+    prompt:'#fff3e0', promptBorder:'#ff8c00', banner:'#e05000',
+    bodyBg:'#c84000',
+    bodyPattern:`radial-gradient(ellipse 180px 40px at 25% 80%, rgba(255,120,0,0.35) 0%, transparent 70%),
+                 radial-gradient(ellipse 140px 30px at 70% 85%, rgba(255,80,0,0.3) 0%, transparent 70%),
+                 radial-gradient(circle 3px at 15% 60%, #ffaa00 100%, transparent 100%),
+                 radial-gradient(circle 2px at 45% 40%, #ff6600 100%, transparent 100%),
+                 radial-gradient(circle 3px at 75% 55%, #ffaa00 100%, transparent 100%),
+                 radial-gradient(circle 2px at 90% 30%, #ff4400 100%, transparent 100%),
+                 linear-gradient(180deg, #c84000 0%, #8b2000 60%, #3d0800 100%)`,
+    hudBg:'#2d0800', hudColor:'#ffcc00',
+    cardBg:'#fff3e0', cardBorder:'#c84000',
+    qcardAccent:'#ff8c00',
+    blockSymbol:'🔥', blockBg:'#ff6600', blockFill:'#ffcc00',
+    groundTop:'#5c1800', groundFill:'#8b2800',
+    trackBg:'#8b2000',
+    bannerEmoji:'🔥',
+    introText:'The Fire Dragon guards this lair! Answer the greeting questions to prove yourself worthy.',
+  },
+
+  // ── LAIR 2: ICE DRAGON'S PALACE ───────────────────────
+  // Icy blue and white, frozen tundra, crystal clear
+  {
+    sky:'#a8d8f0', accent:'#0088cc', accent2:'#e0f8ff',
+    btn:'#e0f8ff', btnShadow:'#4488aa',
+    prompt:'#f0faff', promptBorder:'#0088cc', banner:'#4488aa',
+    bodyBg:'#a8d8f0',
+    bodyPattern:`radial-gradient(ellipse 100px 50px at 20% 15%, rgba(255,255,255,0.8) 60%, transparent 61%),
+                 radial-gradient(ellipse 70px 35px at 15% 15%, rgba(255,255,255,0.9) 60%, transparent 61%),
+                 radial-gradient(ellipse 70px 35px at 27% 15%, rgba(255,255,255,0.9) 60%, transparent 61%),
+                 radial-gradient(ellipse 120px 55px at 72% 10%, rgba(255,255,255,0.8) 60%, transparent 61%),
+                 radial-gradient(ellipse 80px 40px at 66% 10%, rgba(255,255,255,0.9) 60%, transparent 61%),
+                 radial-gradient(circle 4px at 30% 50%, rgba(0,140,220,0.4) 100%, transparent 100%),
+                 radial-gradient(circle 3px at 60% 35%, rgba(0,180,255,0.3) 100%, transparent 100%),
+                 linear-gradient(180deg, #a8d8f0 0%, #7bbedd 100%)`,
+    hudBg:'#004466', hudColor:'#e0f8ff',
+    cardBg:'#f0faff', cardBorder:'#0088cc',
+    qcardAccent:'#0088cc',
+    blockSymbol:'❄️', blockBg:'#aaddff', blockFill:'#e0f8ff',
+    groundTop:'#aaccdd', groundFill:'#cce8f4',
+    trackBg:'#7bbedd',
+    bannerEmoji:'❄️',
+    introText:'The Ice Dragon sees through lies. Describe yourself correctly — or face the cold.',
+  },
+
+  // ── WORLD 1-3: JUNGLE FAMILY FORTRESS ─────────────────
+  // Lush green jungle, earthy browns, warm and bright
+  {
+    sky:'#1a7a30', accent:'#d4a017', accent2:'#fce38a',
+    btn:'#fce38a', btnShadow:'#8a6000',
+    prompt:'#e8fce8', promptBorder:'#1a7a30', banner:'#d4a017',
+    bodyBg:'#1a7a30',
+    bodyPattern:`repeating-linear-gradient(90deg, rgba(0,100,0,0.18) 0px, rgba(0,100,0,0.18) 2px, transparent 2px, transparent 40px),
+                 repeating-linear-gradient(0deg, rgba(0,100,0,0.12) 0px, rgba(0,100,0,0.12) 2px, transparent 2px, transparent 60px),
+                 linear-gradient(180deg, #1a7a30 0%, #145e24 100%)`,
+    hudBg:'#0a3010', hudColor:'#fce38a',
+    cardBg:'#fffef0', cardBorder:'#1a7a30',
+    qcardAccent:'#d4a017',
+    blockSymbol:'🌿', blockBg:'#228b22', blockFill:'#fce38a',
+    groundTop:'#5c3310', groundFill:'#8b4513',
+    trackBg:'#1a7a30',
+    bannerEmoji:'🌿',
+    introText:'The Forest Dragon protects the ancient family scrolls. Prove your knowledge to enter.',
+  },
+
+  // ── WORLD 1-4: BOWSER'S LAVA LAIR ─────────────────────
+  // Fiery red/orange, dark rock, glowing lava — dramatic final boss feel
+  {
+    sky:'#1a0500', accent:'#ff6a00', accent2:'#ffcc00',
+    btn:'#ff6a00', btnShadow:'#8a2000',
+    prompt:'#fff8ee', promptBorder:'#ff6a00', banner:'#cc2200',
+    bodyBg:'#1a0500',
+    bodyPattern:`repeating-linear-gradient(180deg,
+                   transparent 0px, transparent 18px,
+                   rgba(255,80,0,0.08) 18px, rgba(255,80,0,0.08) 20px),
+                 radial-gradient(ellipse 200px 30px at 20% 85%, rgba(255,120,0,0.25) 0%, transparent 70%),
+                 radial-gradient(ellipse 160px 25px at 70% 90%, rgba(255,80,0,0.2) 0%, transparent 70%),
+                 linear-gradient(180deg, #1a0500 0%, #2d0800 60%, #3d1000 100%)`,
+    hudBg:'#0d0000', hudColor:'#ff9900',
+    cardBg:'#1e0800', cardBorder:'#ff6a00',
+    qcardAccent:'#ff6a00',
+    blockSymbol:'🔥', blockBg:'#8b0000', blockFill:'#ff4500',
+    groundTop:'#3d1000', groundFill:'#5c1800',
+    trackBg:'#1a0500',
+    bannerEmoji:'💀',
+    introText:'FINAL LAIR! The Shadow Dragon is the most powerful of all. Only a true dragon rider can pass!',
+  },
+];
+
+function applyTheme(idx){
+  const t=THEMES[idx];
+  const r=document.documentElement.style;
+  const isDark = idx===3; // only Shadow Dragon's Lair is dark
+
+  // ── Core colour tokens ───────────────────────────────
+  r.setProperty('--w-sky',        t.sky);
+  r.setProperty('--w-accent',     t.accent);
+  r.setProperty('--w-accent2',    t.accent2);
+  r.setProperty('--w-btn',        t.btn);
+  r.setProperty('--w-btn-shadow', t.btnShadow);
+  r.setProperty('--w-prompt',     t.prompt);
+  r.setProperty('--w-prompt-border', t.promptBorder);
+  r.setProperty('--w-banner',     t.banner);
+
+  // ── Text colour tokens — used by CSS directly ────────
+  r.setProperty('--w-prompt-text', isDark ? '#ffdd88' : '#1a0800');
+  r.setProperty('--w-prompt-dir',  isDark ? '#ff9944' : (idx===0?'#8b2000':idx===1?'#005588':'#1a5c00'));
+  r.setProperty('--w-card-bg',     isDark ? t.cardBg : (idx===0?'#fff3e0':idx===1?'#f0faff':'#fff'));
+  r.setProperty('--w-card-text',   isDark ? '#ffdd88' : '#1a0800');
+  r.setProperty('--w-ctx-bg',      isDark ? '#200800' : (idx===0?'#fff3e0':idx===1?'#e8f8ff':'#fffbe6'));
+  r.setProperty('--w-ctx-text',    isDark ? '#ffcc88' : '#222');
+  r.setProperty('--w-feedback-bad',isDark ? '#ff6666' : '#cc0000');
+
+  // ── Body background ──────────────────────────────────
+  document.body.style.backgroundImage = t.bodyPattern;
+  document.body.style.backgroundColor = t.bodyBg;
+
+  // ── HUD (exists immediately) ─────────────────────────
+  const hud=document.querySelector('.hud');
+  if(hud){hud.style.background=t.hudBg;hud.style.color=t.hudColor;}
+
+  // ── Track ────────────────────────────────────────────
+  const tg=document.querySelector('.track-ground');
+  if(tg){
+    // stone ground — tint slightly per world
+    const stoneTint=isDark?'#2a1a10':'#3d2a1e';
+    tg.style.background=stoneTint;
+    document.querySelectorAll('.track-ground-tile').forEach(tile=>tile.style.background=stoneTint);
+  }
+  const track=document.getElementById('progress-track');
+  if(track) track.style.background=t.trackBg;
+
+  // ── Banner ───────────────────────────────────────────
+  const be=document.getElementById('banner-emoji-extra');
+  if(be) be.textContent=t.bannerEmoji;
+
+  // ── Parallax background ──────────────────────────────
+  applyParallax(idx);
+
+  // ── World intro splash ───────────────────────────────
+  showWorldIntro(WORLDS[idx].name, t.introText, t.accent, idx);
+}
+
+// ═══════════════════════════════════
+//  WORLD INTRO SPLASH
+// ═══════════════════════════════════
+function showWorldIntro(name, desc, color, idx){
+  const ov=document.getElementById('world-intro-ov');
+  ov.style.background=`linear-gradient(135deg, ${THEMES[idx].bodyBg}ee, ${THEMES[idx].accent}55)`;
+  ov.style.display='flex';
+  document.getElementById('wi-num').textContent=`WORLD ${WORLDS[idx].num}`;
+  document.getElementById('wi-icon').textContent=WORLDS[idx].icon;
+  document.getElementById('wi-name').textContent=name;
+  document.getElementById('wi-desc').textContent=desc;
+  const dismiss=()=>{
+    ov.style.display='none';
+    ov.removeEventListener('click',dismiss);
+    window.removeEventListener('keydown',dismiss);
+  };
+  setTimeout(()=>{
+    ov.addEventListener('click',dismiss);
+    window.addEventListener('keydown',dismiss);
+    // auto-dismiss after 4s
+    setTimeout(dismiss, 4000);
+  }, 400);
+}
+
+
+// ═══════════════════════════════════
+//  DIFFICULTY CONFIG
+// ═══════════════════════════════════
+// Player-selected difficulty — multiplier on top of world base
+const DIFF_CFG={
+  easy:{label:'🍄 EASY',  cls:'easy', choiceBonus:0, spareBonus:0,
+        timer:{0:0, 120:0,  90:0}},   // no timer ever
+  mid: {label:'⭐ NORMAL',cls:'mid',  choiceBonus:1, spareBonus:1,
+        timer:{0:45, 120:45, 90:45}}, // 45s on all worlds
+  hard:{label:'🔥 HARD',  cls:'hard', choiceBonus:2, spareBonus:2,
+        timer:{0:20, 120:20, 90:20}}, // 20s per question — tight
+};
+
+// Per-world base difficulty — gets harder each room
+const WORLD_DIFF=[
+  // World 1-1: Easy intro — simple vocab focus, no timer, few distractors
+  { choices:3, timerSec:0,  spares:1, similarDistractors:false,
+    typeWeights:{vocab:4, grammar:2, builder:1, comp:1},
+    label:'🔥 LAIR 1', hint:true },
+  // World 1-2: Medium — more grammar, timer introduced on Normal+, one extra spare
+  { choices:3, timerSec:0,  spares:2, similarDistractors:false,
+    typeWeights:{vocab:2, grammar:3, builder:2, comp:1},
+    label:'❄️ LAIR 2', hint:false },
+  // World 1-3: Hard — grammar/comp heavy, similar distractors, timer on Easy+
+  { choices:4, timerSec:120, spares:3, similarDistractors:true,
+    typeWeights:{vocab:1, grammar:3, builder:2, comp:2},
+    label:'🌿 LAIR 3', hint:false },
+  // World 1-4: Expert — max choices, tightest timer, most spares, all similar distractors
+  { choices:4, timerSec:90, spares:4, similarDistractors:true,
+    typeWeights:{vocab:1, grammar:3, builder:2, comp:2},
+    label:'💀 LAIR 4', hint:false },
+];
+
+// Combine world base + player selection into effective params
+function getEffectiveDiff(){
+  const w=WORLD_DIFF[wIdx];
+  const d=DIFF_CFG[selectedDiff];
+  const choices = Math.min(5, w.choices + d.choiceBonus);
+  const timerSec = d.timer[w.timerSec]; // direct lookup — no formula
+  const spares = Math.min(4, w.spares + d.spareBonus);
+  return { choices, timerSec, spares, similarDistractors:w.similarDistractors };
+}
+
+// ═══════════════════════════════════
+//  WORLD DATA — questions tagged easy / normal / hard
+//  easy   = single word / direct translation / obvious answer
+//  normal = requires grammar knowledge / slightly tricky distractor
+//  hard   = production, negative, inference, or ES→EN reversal
+// ═══════════════════════════════════
+const WORLDS=[
+  { num:'1', name:'FIRE DRAGON\'S DEN', icon:'🔥', mario:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 72' width='52' height='60'>
+  <!-- tail curl -->
+  <path d='M8,65 Q-2,72 2,80 Q10,70 18,65' fill='none' stroke='#cc2200' stroke-width='6' stroke-linecap='round'/>
+  <path d='M8,65 Q-2,68 0,74 Q8,66 16,64' fill='none' stroke='#ff4400' stroke-width='3' stroke-linecap='round'/>
+  <!-- body - round and chubby -->
+  <ellipse cx='30' cy='50' rx='20' ry='16' fill='#dd2200'/>
+  <!-- belly - lighter patch -->
+  <ellipse cx='30' cy='54' rx='13' ry='10' fill='#ff6644'/>
+  <!-- body highlight -->
+  <ellipse cx='24' cy='44' rx='7' ry='5' fill='rgba(255,255,255,0.15)'/>
+  <!-- neck - chunky -->
+  <path d='M34,36 Q42,28 44,18 Q36,26 30,36Z' fill='#dd2200'/>
+  <!-- wing - large expressive -->
+  <path d='M16,44 Q-4,22 6,4 Q16,28 26,38Z' fill='#aa1500'/>
+  <!-- wing membrane detail -->
+  <path d='M16,44 Q0,28 8,12 Q16,30 24,40' fill='none' stroke='#cc2200' stroke-width='1' opacity='.5'/>
+  <path d='M16,44 Q4,34 10,18 Q16,32 22,42' fill='none' stroke='#cc2200' stroke-width='1' opacity='.4'/>
+  <!-- wing highlight -->
+  <path d='M10,20 Q14,28 18,36' fill='none' stroke='rgba(255,100,0,0.3)' stroke-width='3' stroke-linecap='round'/>
+  <!-- back spines - cute small triangles -->
+  <path d='M28,36 L25,26 L31,34' fill='#ff4400'/>
+  <path d='M34,33 L32,22 L38,31' fill='#ff4400'/>
+  <path d='M40,30 L39,20 L44,29' fill='#ff4400'/>
+  <!-- HEAD - big round cute head -->
+  <ellipse cx='48' cy='20' rx='16' ry='14' fill='#ee2800'/>
+  <!-- head highlight -->
+  <ellipse cx='43' cy='13' rx='7' ry='5' fill='rgba(255,255,255,0.18)'/>
+  <!-- snout - rounded -->
+  <ellipse cx='58' cy='24' rx='8' ry='6' fill='#cc2200'/>
+  <!-- nostrils -->
+  <ellipse cx='57' cy='22' rx='1.5' ry='1' fill='#990000'/>
+  <ellipse cx='61' cy='23' rx='1.5' ry='1' fill='#990000'/>
+  <!-- BIG CUTE EYE -->
+  <circle cx='47' cy='16' r='7' fill='white'/>
+  <circle cx='48' cy='16' r='5' fill='#ff6600'/>
+  <circle cx='48' cy='16' r='3' fill='#330000'/>
+  <circle cx='46' cy='14' r='1.5' fill='white'/>
+  <circle cx='50' cy='17' r='.8' fill='white'/>
+  <!-- eyelid -->
+  <path d='M41,13 Q47,9 54,13' fill='none' stroke='#aa1500' stroke-width='2' stroke-linecap='round'/>
+  <!-- SMILE with tiny teeth -->
+  <path d='M52,28 Q56,32 60,29' fill='none' stroke='#aa1500' stroke-width='2' stroke-linecap='round'/>
+  <path d='M53,29 L54,32 L55,29 L57,32 L58,29' fill='white' stroke='#aa1500' stroke-width='.8'/>
+  <!-- horn - cute small -->
+  <path d='M42,8 L40,0 L46,8' fill='#aa1500'/>
+  <path d='M50,7 L50,-1 L55,7' fill='#cc2200'/>
+  <!-- FLAME BREATH - swirly -->
+  <path d='M62,22 Q72,12 66,4 Q68,14 62,18 Q72,8 68,18 Q74,10 68,22 Q64,26 62,22Z' fill='#ff8800' filter='url(#gf)'/>
+  <path d='M62,22 Q70,14 66,8 Q67,16 63,20Z' fill='#ffee44'/>
+  <!-- chubby legs -->
+  <ellipse cx='20' cy='64' rx='7' ry='5' fill='#cc2200' transform='rotate(-10,20,64)'/>
+  <ellipse cx='38' cy='65' rx='7' ry='5' fill='#cc2200' transform='rotate(10,38,65)'/>
+  <!-- cute toe claws -->
+  <path d='M15,67 L13,72 M19,68 L18,73 M23,67 L23,72' stroke='#ffcc00' stroke-width='1.5' stroke-linecap='round'/>
+  <path d='M33,68 L31,73 M37,69 L37,74 M41,68 L43,73' stroke='#ffcc00' stroke-width='1.5' stroke-linecap='round'/>
+  <!-- small arms -->
+  <path d='M42,46 Q50,42 52,48' stroke='#cc2200' stroke-width='5' stroke-linecap='round' fill='none'/>
+  <path d='M50,48 L48,52 M52,47 L52,52' stroke='#ffcc00' stroke-width='1.2' stroke-linecap='round'/>
+</svg>`,
+    pool:[
+      // ── EASY ────────────────────────────────────────────────
+      {diff:'easy',type:'vocab',prompt:'What does "¡Hola!" mean?',answer:'Hello!',
+       choices:['Hello!','Goodbye!','How are you?','See you later!','I live in…']},
+      {diff:'easy',type:'vocab',prompt:'What does "¡Adiós!" mean?',answer:'Goodbye!',
+       choices:['Goodbye!','Hello!','See you later!','Fine, thanks.','Not bad.']},
+      {diff:'easy',type:'vocab',prompt:'What does "Bien, gracias" mean?',answer:'Fine, thanks.',
+       choices:['Fine, thanks.','Not bad.','Awful.','Great.','Goodbye!']},
+      {diff:'easy',type:'vocab',prompt:'What does "Fenomenal" mean?',answer:'Great.',
+       choices:['Great.','Fine, thanks.','Not bad.','Awful.','Hello!']},
+      {diff:'easy',type:'vocab',prompt:'What does "Fatal" mean?',answer:'Awful.',
+       choices:['Awful.','Not bad.','Fine, thanks.','Great.','See you later!']},
+      {diff:'easy',type:'comp',context:'"Me llamo Luca. Vivo en Sydney. ¡Hasta luego!"',
+       question:'What city does Luca live in?',answer:'Sydney',
+       choices:['Sydney','Madrid','Perth','Brisbane','Melbourne']},
+      {diff:'easy',type:'builder',prompt:'Build: "I live in Sydney."',answer:'Vivo en Sydney.',
+       words:['Vivo','en','Sydney.'],extraSpares:['Me','llamo','¡Hola!','¡Adiós!']},
+      {diff:'easy',type:'builder',prompt:'Build: "I am called Ana."',answer:'Me llamo Ana.',
+       words:['Me','llamo','Ana.'],extraSpares:['Vivo','en','¡Hola!','¡Adiós!']},
+      // ── NORMAL ──────────────────────────────────────────────
+      {diff:'normal',type:'vocab',prompt:'What does "¡Hasta luego!" mean?',answer:'See you later!',
+       choices:['See you later!','Goodbye!','Hello!','How are you?','I am called…']},
+      {diff:'normal',type:'vocab',prompt:'What does "Regular" mean?',answer:'Not bad.',
+       choices:['Not bad.','Fine, thanks.','Awful.','Great.','Hello!']},
+      {diff:'normal',type:'vocab',prompt:'What does "¿Dónde vives?" mean?',answer:'Where do you live?',
+       choices:['Where do you live?','What are you called?','How are you?','How old are you?','What is your name?']},
+      {diff:'normal',type:'grammar',prompt:'Complete: "__ llamo Carlos."',answer:'Me',
+       choices:['Me','Te','Se','Le','Nos']},
+      {diff:'normal',type:'grammar',prompt:'Complete: "¿Cómo __ llamas?"',answer:'te',
+       choices:['te','me','se','le','nos']},
+      {diff:'normal',type:'comp',context:'Marta says: "¡Hola! Me llamo Marta. Vivo en Madrid. ¿Y tú?"',
+       question:'Where does Marta live?',answer:'Madrid',
+       choices:['Madrid','Barcelona','Valencia','Sevilla','Málaga']},
+      {diff:'normal',type:'comp',context:'"¡Hola! ¿Qué tal? — Bien, gracias. ¿Y tú? — Regular."',
+       question:'How does the second person feel?',answer:'Not bad / OK',
+       choices:['Not bad / OK','Great','Awful','Fine','Terrible']},
+      // ── HARD ────────────────────────────────────────────────
+      {diff:'hard',type:'grammar',prompt:'¿Cuál es la traducción correcta de "Vivo en…"?',answer:'I live in…',
+       choices:['I live in…','I am called…','I am from…','I stay in…','I am in…']},
+      {diff:'hard',type:'grammar',prompt:'Completa: "Me llamo Ana __ vivo en Perth."',answer:'y',
+       choices:['y','pero','también','porque','o']},
+      {diff:'hard',type:'builder',prompt:'Build: "Where do you live?" in Spanish',answer:'¿Dónde vives?',
+       words:['¿Dónde','vives?'],extraSpares:['¿Cómo','llamas?','Vivo','en','¡Hola!','¿Qué','tal?']},
+      {diff:'hard',type:'comp',context:'"Me llamo Sara. Vivo en Brisbane. ¿Qué tal? — Fatal, gracias. No vivo en Madrid."',
+       question:'¿Cómo se llama la chica? (What is the girl called?)',answer:'Sara',
+       choices:['Sara','Madrid','Brisbane','Ana','Marta']},
+    ]
+  },
+
+  { num:'2', name:'ICE DRAGON\'S PALACE', icon:'❄️', mario:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 72' width='52' height='60'>
+  <!-- tail curl -->
+  <path d='M8,65 Q-2,72 2,80 Q10,70 18,65' fill='none' stroke='#1a88cc' stroke-width='6' stroke-linecap='round'/>
+  <path d='M8,65 Q-2,68 0,74 Q8,66 16,64' fill='none' stroke='#66ccff' stroke-width='3' stroke-linecap='round'/>
+  <!-- tail tip ice crystal -->
+  <path d='M2,77 L0,82 L4,79 L2,85 L6,80' fill='#aaeeff' opacity='.8'/>
+  <!-- body -->
+  <ellipse cx='30' cy='50' rx='20' ry='16' fill='#2299dd'/>
+  <!-- belly - pearly white -->
+  <ellipse cx='30' cy='54' rx='13' ry='10' fill='#aaddff'/>
+  <!-- body highlight -->
+  <ellipse cx='24' cy='44' rx='7' ry='5' fill='rgba(255,255,255,0.25)'/>
+  <!-- ice plate scales on body -->
+  <path d='M22,46 Q26,42 30,46' fill='none' stroke='#66ccff' stroke-width='1.5' opacity='.6'/>
+  <path d='M26,50 Q30,46 34,50' fill='none' stroke='#66ccff' stroke-width='1.5' opacity='.6'/>
+  <path d='M18,52 Q22,48 26,52' fill='none' stroke='#66ccff' stroke-width='1.5' opacity='.5'/>
+  <!-- neck -->
+  <path d='M34,36 Q42,28 44,18 Q36,26 30,36Z' fill='#2299dd'/>
+  <!-- wing -->
+  <path d='M16,44 Q-4,22 6,4 Q16,28 26,38Z' fill='#1a77bb'/>
+  <path d='M16,44 Q0,28 8,12 Q16,30 24,40' fill='none' stroke='#66ccff' stroke-width='1' opacity='.5'/>
+  <path d='M16,44 Q4,34 10,18 Q16,32 22,42' fill='none' stroke='#aaeeff' stroke-width='1' opacity='.4'/>
+  <!-- wing highlight -->
+  <path d='M10,20 Q14,28 18,36' fill='none' stroke='rgba(170,238,255,0.4)' stroke-width='3' stroke-linecap='round'/>
+  <!-- back ice spines -->
+  <path d='M28,36 L24,24 L31,34' fill='#aaeeff'/>
+  <path d='M34,33 L31,20 L38,31' fill='#88ddff'/>
+  <path d='M40,30 L38,18 L44,29' fill='#aaeeff'/>
+  <!-- HEAD -->
+  <ellipse cx='48' cy='20' rx='16' ry='14' fill='#2aabee'/>
+  <ellipse cx='43' cy='13' rx='7' ry='5' fill='rgba(255,255,255,0.22)'/>
+  <!-- snout -->
+  <ellipse cx='58' cy='24' rx='8' ry='6' fill='#1a88cc'/>
+  <ellipse cx='57' cy='22' rx='1.5' ry='1' fill='#005588'/>
+  <ellipse cx='61' cy='23' rx='1.5' ry='1' fill='#005588'/>
+  <!-- BIG CUTE EYE - icy cyan -->
+  <circle cx='47' cy='16' r='7' fill='white'/>
+  <circle cx='48' cy='16' r='5' fill='#00ccee'/>
+  <circle cx='48' cy='16' r='3' fill='#002244'/>
+  <circle cx='46' cy='14' r='1.5' fill='white'/>
+  <circle cx='50' cy='17' r='.8' fill='white'/>
+  <path d='M41,13 Q47,9 54,13' fill='none' stroke='#1a77bb' stroke-width='2' stroke-linecap='round'/>
+  <!-- smile -->
+  <path d='M52,28 Q56,32 60,29' fill='none' stroke='#1a77bb' stroke-width='2' stroke-linecap='round'/>
+  <path d='M53,29 L54,32 L55,29 L57,32 L58,29' fill='white' stroke='#1a77bb' stroke-width='.8'/>
+  <!-- ice crystal horns -->
+  <path d='M40,9 L37,0 L44,8' fill='#aaeeff'/>
+  <path d='M38,8 L35,2 L41,7' fill='#88ddff' opacity='.6'/>
+  <path d='M50,7 L49,-2 L55,6' fill='#aaeeff'/>
+  <path d='M48,7 L47,-1 L53,5' fill='#88ddff' opacity='.6'/>
+  <!-- ICE BREATH - sparkly -->
+  <path d='M62,22 Q74,16 70,6 Q70,16 64,20 Q74,12 70,20 Q76,14 70,22 Q66,26 62,22Z' fill='#aaeeff' opacity='.85'/>
+  <path d='M63,22 Q72,16 68,10 Q69,18 64,20Z' fill='white' opacity='.6'/>
+  <!-- snowflake sparkles -->
+  <path d='M68,10 L68,6 M66,8 L70,8 M66,7 L70,9 M66,9 L70,7' stroke='white' stroke-width='.8' opacity='.7'/>
+  <!-- legs -->
+  <ellipse cx='20' cy='64' rx='7' ry='5' fill='#1a88cc' transform='rotate(-10,20,64)'/>
+  <ellipse cx='38' cy='65' rx='7' ry='5' fill='#1a88cc' transform='rotate(10,38,65)'/>
+  <path d='M15,67 L13,72 M19,68 L18,73 M23,67 L23,72' stroke='#aaeeff' stroke-width='1.5' stroke-linecap='round'/>
+  <path d='M33,68 L31,73 M37,69 L37,74 M41,68 L43,73' stroke='#aaeeff' stroke-width='1.5' stroke-linecap='round'/>
+  <!-- arms -->
+  <path d='M42,46 Q50,42 52,48' stroke='#1a88cc' stroke-width='5' stroke-linecap='round' fill='none'/>
+  <path d='M50,48 L48,52 M52,47 L52,52' stroke='#aaeeff' stroke-width='1.2' stroke-linecap='round'/>
+</svg>`,
+    pool:[
+      // ── EASY ────────────────────────────────────────────────
+      {diff:'easy',type:'vocab',prompt:'What does "soy tímido/a" mean?',answer:'I am shy',
+       choices:['I am shy','I am funny','I am serious','I am nice','I am clever']},
+      {diff:'easy',type:'vocab',prompt:'What does "soy divertido/a" mean?',answer:'I am funny',
+       choices:['I am funny','I am shy','I am serious','I am generous','I am silly']},
+      {diff:'easy',type:'vocab',prompt:'"Muy" means…',answer:'very',
+       choices:['very','quite','a bit','but','also']},
+      {diff:'easy',type:'vocab',prompt:'"Bastante" means…',answer:'quite',
+       choices:['quite','very','a bit','but','also']},
+      {diff:'easy',type:'vocab',prompt:'"Un poco" means…',answer:'a bit',
+       choices:['a bit','very','quite','but','also']},
+      {diff:'easy',type:'builder',prompt:'Build: "I am very funny."',answer:'Soy muy divertido.',
+       words:['Soy','muy','divertido.'],extraSpares:['bastante','tímido.','pero','también']},
+      {diff:'easy',type:'comp',context:'"Me llamo Leo. Soy muy listo. También soy generoso."',
+       question:'What is one word that describes Leo?',answer:'listo (clever)',
+       choices:['listo (clever)','tímido (shy)','tonto (silly)','serio (serious)','tranquilo (calm)']},
+      // ── NORMAL ──────────────────────────────────────────────
+      {diff:'normal',type:'vocab',prompt:'What does "soy generoso/a" mean?',answer:'I am generous',
+       choices:['I am generous','I am clever','I am shy','I am calm','I am serious']},
+      {diff:'normal',type:'vocab',prompt:'"También" means…',answer:'also / too',
+       choices:['also / too','but','very','quite','a bit']},
+      {diff:'normal',type:'vocab',prompt:'"Pero" means…',answer:'but',
+       choices:['but','also / too','very','quite','a bit']},
+      {diff:'normal',type:'grammar',prompt:'Choose the correct form: "Ella __ simpática."',answer:'es',
+       choices:['es','soy','eres','son','está']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Soy divertido, __ no soy tonto."',answer:'pero',
+       choices:['pero','también','muy','bastante','un poco']},
+      {diff:'normal',type:'builder',prompt:'Build: "I am also generous."',answer:'También soy generoso.',
+       words:['También','soy','generoso.'],extraSpares:['pero','tímido.','un poco','muy']},
+      {diff:'normal',type:'comp',context:'"Me llamo Leo. Soy muy listo pero un poco serio. No soy tonto. También soy generoso."',
+       question:'What does Leo say he is NOT?',answer:'tonto (silly)',
+       choices:['tonto (silly)','tímido (shy)','serio (serious)','generoso (generous)','listo (clever)']},
+      // ── HARD ────────────────────────────────────────────────
+      {diff:'hard',type:'grammar',prompt:'Completa en español: "Soy simpático y __ soy generoso."',answer:'también',
+       choices:['también','pero','muy','bastante','un poco']},
+      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta: "¿Qué tipo de persona __?" (you are)',answer:'eres',
+       choices:['eres','es','soy','son','estás']},
+      {diff:'hard',type:'builder',prompt:'Escribe en español: "I am quite calm but a bit serious."',answer:'Soy bastante tranquilo pero un poco serio.',
+       words:['Soy','bastante','tranquilo','pero','un poco','serio.'],extraSpares:['muy','tímido.','también','divertido.','eres','simpático.']},
+      {diff:'hard',type:'comp',context:'"Soy bastante tranquila y muy simpática. Un poco seria también. No soy tonta ni tímida."',
+       question:'Según el texto — ¿cómo es esta persona? (Select what is TRUE)',answer:'tranquila y simpática',
+       choices:['tranquila y simpática','tonta y seria','tímida y tranquila','divertida y generosa','seria y tímida']},
+      {diff:'hard',type:'grammar',prompt:'Elige la traducción correcta: "I am not shy."',answer:'No soy tímido.',
+       choices:['No soy tímido.','Soy no tímido.','No estoy tímido.','Soy tímido no.','No soy tímida.']},
+    ]
+  },
+
+  { num:'3', name:'FOREST DRAGON\'S FORTRESS', icon:'🌿', mario:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 72' width='52' height='60'>
+  <!-- tail curl -->
+  <path d='M8,65 Q-2,72 2,80 Q10,70 18,65' fill='none' stroke='#1a7a1a' stroke-width='6' stroke-linecap='round'/>
+  <path d='M8,65 Q-2,68 0,74 Q8,66 16,64' fill='none' stroke='#44cc44' stroke-width='3' stroke-linecap='round'/>
+  <!-- leaf tail tip -->
+  <path d='M2,76 Q-2,80 2,84 Q6,80 4,76Z' fill='#44cc44' opacity='.8'/>
+  <!-- body -->
+  <ellipse cx='30' cy='50' rx='20' ry='16' fill='#228b22'/>
+  <!-- belly - warm cream -->
+  <ellipse cx='30' cy='54' rx='13' ry='10' fill='#88cc44'/>
+  <ellipse cx='24' cy='44' rx='7' ry='5' fill='rgba(255,255,255,0.15)'/>
+  <!-- leaf scale pattern -->
+  <path d='M20,46 Q24,40 28,46' fill='#33aa33' opacity='.5'/>
+  <path d='M28,44 Q32,38 36,44' fill='#33aa33' opacity='.5'/>
+  <path d='M16,54 Q20,48 24,54' fill='#33aa33' opacity='.4'/>
+  <path d='M32,52 Q36,46 40,52' fill='#33aa33' opacity='.4'/>
+  <!-- neck -->
+  <path d='M34,36 Q42,28 44,18 Q36,26 30,36Z' fill='#228b22'/>
+  <!-- wing - leaf-veined -->
+  <path d='M16,44 Q-4,22 6,4 Q16,28 26,38Z' fill='#1a7a1a'/>
+  <path d='M16,44 Q0,28 8,12 Q16,30 24,40' fill='none' stroke='#44cc44' stroke-width='1.2' opacity='.5'/>
+  <path d='M16,44 Q4,34 10,18 Q16,32 22,42' fill='none' stroke='#66dd44' stroke-width='1' opacity='.4'/>
+  <path d='M16,44 Q8,38 12,24 Q16,34 20,42' fill='none' stroke='#44cc44' stroke-width='1' opacity='.3'/>
+  <!-- wing highlight -->
+  <path d='M10,20 Q14,28 18,36' fill='none' stroke='rgba(100,220,80,0.3)' stroke-width='3' stroke-linecap='round'/>
+  <!-- leaf-shaped back frills -->
+  <path d='M27,36 Q22,26 28,22 Q32,28 31,35Z' fill='#44cc44'/>
+  <path d='M33,33 Q29,22 35,18 Q39,24 38,32Z' fill='#33bb33'/>
+  <path d='M39,30 Q36,20 42,16 Q46,22 44,30Z' fill='#44cc44'/>
+  <!-- HEAD - rounder -->
+  <ellipse cx='48' cy='20' rx='16' ry='14' fill='#2aaa2a'/>
+  <ellipse cx='43' cy='13' rx='7' ry='5' fill='rgba(255,255,255,0.2)'/>
+  <!-- snout -->
+  <ellipse cx='58' cy='24' rx='8' ry='6' fill='#1a8a1a'/>
+  <ellipse cx='57' cy='22' rx='1.5' ry='1' fill='#115511'/>
+  <ellipse cx='61' cy='23' rx='1.5' ry='1' fill='#115511'/>
+  <!-- BIG CUTE EYE - warm green -->
+  <circle cx='47' cy='16' r='7' fill='white'/>
+  <circle cx='48' cy='16' r='5' fill='#44bb00'/>
+  <circle cx='48' cy='16' r='3' fill='#112200'/>
+  <circle cx='46' cy='14' r='1.5' fill='white'/>
+  <circle cx='50' cy='17' r='.8' fill='white'/>
+  <path d='M41,13 Q47,9 54,13' fill='none' stroke='#1a7a1a' stroke-width='2' stroke-linecap='round'/>
+  <!-- smile -->
+  <path d='M52,28 Q56,32 60,29' fill='none' stroke='#1a7a1a' stroke-width='2' stroke-linecap='round'/>
+  <path d='M53,29 L54,32 L55,29 L57,32 L58,29' fill='white' stroke='#1a7a1a' stroke-width='.8'/>
+  <!-- leafy head frills -->
+  <path d='M38,8 Q34,0 40,2 Q40,6 38,8Z' fill='#44cc44'/>
+  <path d='M44,6 Q42,-2 48,1 Q47,6 44,6Z' fill='#33bb33'/>
+  <path d='M50,7 Q50,-1 56,2 Q54,7 50,7Z' fill='#44cc44'/>
+  <!-- vine/leaf accent on cheek -->
+  <path d='M54,18 Q58,14 60,18' fill='none' stroke='#44cc44' stroke-width='1.5' stroke-linecap='round'/>
+  <!-- legs -->
+  <ellipse cx='20' cy='64' rx='7' ry='5' fill='#1a7a1a' transform='rotate(-10,20,64)'/>
+  <ellipse cx='38' cy='65' rx='7' ry='5' fill='#1a7a1a' transform='rotate(10,38,65)'/>
+  <path d='M15,67 L13,72 M19,68 L18,73 M23,67 L23,72' stroke='#88ee44' stroke-width='1.5' stroke-linecap='round'/>
+  <path d='M33,68 L31,73 M37,69 L37,74 M41,68 L43,73' stroke='#88ee44' stroke-width='1.5' stroke-linecap='round'/>
+  <!-- arms -->
+  <path d='M42,46 Q50,42 52,48' stroke='#1a7a1a' stroke-width='5' stroke-linecap='round' fill='none'/>
+  <path d='M50,48 L48,52 M52,47 L52,52' stroke='#88ee44' stroke-width='1.2' stroke-linecap='round'/>
+</svg>`,
+    pool:[
+      // ── EASY ────────────────────────────────────────────────
+      {diff:'easy',type:'vocab',prompt:'What does "Tengo una hermana" mean?',answer:'I have a sister',
+       choices:['I have a sister','I have a brother','I have a pet','I am an only child','I have a stepsister']},
+      {diff:'easy',type:'vocab',prompt:'What does "Tengo un hermano" mean?',answer:'I have a brother',
+       choices:['I have a brother','I have a sister','I have a half-brother','I am an only child','I have no siblings']},
+      {diff:'easy',type:'vocab',prompt:'What is "cinco" in English?',answer:'five',
+       choices:['five','four','six','three','seven']},
+      {diff:'easy',type:'vocab',prompt:'What is "diez" in English?',answer:'ten',
+       choices:['ten','six','three','eight','five']},
+      {diff:'easy',type:'builder',prompt:'Build: "I have a sister."',answer:'Tengo una hermana.',
+       words:['Tengo','una','hermana.'],extraSpares:['un','hermano.','dos','tres']},
+      {diff:'easy',type:'comp',context:'"Me llamo Sofía. Tengo once años. Tengo un hermano y una hermana."',
+       question:'How old is Sofía?',answer:'11',
+       choices:['11','10','12','13','9']},
+      // ── NORMAL ──────────────────────────────────────────────
+      {diff:'normal',type:'vocab',prompt:'What does "Soy hijo único" mean?',answer:'I am an only child (male)',
+       choices:['I am an only child (male)','I am an only child (female)','I have no pets','I have a brother','I am very serious']},
+      {diff:'normal',type:'vocab',prompt:'What is "doce" in English?',answer:'twelve',
+       choices:['twelve','eleven','thirteen','ten','fourteen']},
+      {diff:'normal',type:'vocab',prompt:'What does "Tengo… años" mean?',answer:'I am… years old.',
+       choices:['I am… years old.','I have… brothers.','I live in…','I am called…','I have… pets.']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "__ años tienes?"',answer:'¿Cuántos',
+       choices:['¿Cuántos','¿Cómo','¿Dónde','¿Qué','¿Cuándo']},
+      {diff:'normal',type:'grammar',prompt:'Choose the right article: "Tengo __ hermano."',answer:'un',
+       choices:['un','una','el','la','unos']},
+      {diff:'normal',type:'builder',prompt:'Build: "I have two brothers."',answer:'Tengo dos hermanos.',
+       words:['Tengo','dos','hermanos.'],extraSpares:['una','hermana.','tres','cuatro']},
+      {diff:'normal',type:'comp',context:'"Hola, me llamo Marco. Tengo doce años. Soy hijo único y vivo en Perth."',
+       question:'Does Marco have any brothers or sisters?',answer:'No, he is an only child',
+       choices:['No, he is an only child','Yes, one sister','Yes, two brothers','The text does not say','Yes, one brother']},
+      // ── HARD ────────────────────────────────────────────────
+      {diff:'hard',type:'grammar',prompt:'Elige el verbo correcto: "Yo __ tres hermanos."',answer:'tengo',
+       choices:['tengo','tienes','tiene','tenemos','tienen']},
+      {diff:'hard',type:'grammar',prompt:'Completa: "No __ hermanos." — ¿cuál es correcto?',answer:'tengo',
+       choices:['tengo','tienes','tiene','tenemos','tienen']},
+      {diff:'hard',type:'grammar',prompt:'Elige el artículo correcto: "Tengo __ hermana." (a sister)',answer:'una',
+       choices:['una','un','la','el','unas']},
+      {diff:'hard',type:'builder',prompt:'Escribe en español: "I am an only child." (male)',answer:'Soy hijo único.',
+       words:['Soy','hijo','único.'],extraSpares:['hija','No','tengo','hermanos.','una','hermana.']},
+      {diff:'hard',type:'comp',context:'"Tengo dos hermanas y un hermano. No tengo mascotas. Tengo trece años. Soy hija única — ¡mentira!"',
+       question:'¿Cuántos hermanos tiene en total? (How many siblings in total?)',answer:'3',
+       choices:['3','2','1','4','5']},
+    ]
+  },
+
+  { num:'4', name:"SHADOW DRAGON'S LAIR", icon:'💀', mario:`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 72' width='52' height='60'>
+  <path d='M8,65 Q-2,72 2,80 Q10,70 18,65' fill='none' stroke='#330066' stroke-width='6' stroke-linecap='round'/>
+  <path d='M8,65 Q-2,68 0,74 Q8,66 16,64' fill='none' stroke='#9900cc' stroke-width='3' stroke-linecap='round'/>
+  <circle cx='2' cy='78' r='2' fill='#cc44ff' opacity='.7'/>
+  <ellipse cx='30' cy='50' rx='20' ry='16' fill='#440088'/>
+  <ellipse cx='30' cy='54' rx='13' ry='10' fill='#6600aa'/>
+  <ellipse cx='24' cy='44' rx='7' ry='5' fill='rgba(200,100,255,0.2)'/>
+  <path d='M20,46 Q24,42 28,46' fill='none' stroke='#9933cc' stroke-width='1.5' opacity='.6'/>
+  <path d='M26,50 Q30,46 34,50' fill='none' stroke='#9933cc' stroke-width='1.5' opacity='.6'/>
+  <circle cx='14' cy='42' r='2' fill='#cc44ff' opacity='.6'/>
+  <path d='M34,36 Q42,28 44,18 Q36,26 30,36Z' fill='#440088'/>
+  <path d='M16,44 Q-4,22 6,4 Q16,28 26,38Z' fill='#220055'/>
+  <path d='M16,44 Q0,28 8,12 Q16,30 24,40' fill='none' stroke='#9900cc' stroke-width='1.2' opacity='.5'/>
+  <path d='M27,36 L22,24 L30,34' fill='#6600aa'/>
+  <path d='M33,33 L30,20 L37,31' fill='#7700bb'/>
+  <path d='M39,30 L37,17 L43,29' fill='#6600aa'/>
+  <ellipse cx='48' cy='20' rx='16' ry='14' fill='#5500aa'/>
+  <ellipse cx='43' cy='13' rx='7' ry='5' fill='rgba(200,100,255,0.25)'/>
+  <ellipse cx='58' cy='24' rx='8' ry='6' fill='#440088'/>
+  <ellipse cx='57' cy='22' rx='1.5' ry='1' fill='#220044'/>
+  <ellipse cx='61' cy='23' rx='1.5' ry='1' fill='#220044'/>
+  <circle cx='47' cy='16' r='8' fill='#220033'/>
+  <circle cx='47' cy='16' r='6' fill='#cc00ff' opacity='.4'/>
+  <circle cx='48' cy='16' r='5' fill='#ee44ff'/>
+  <circle cx='48' cy='16' r='3' fill='#110022'/>
+  <circle cx='46' cy='14' r='1.8' fill='white'/>
+  <circle cx='50' cy='17' r='.9' fill='rgba(255,255,255,0.6)'/>
+  <circle cx='47' cy='16' r='8' fill='none' stroke='#cc00ff' stroke-width='1' opacity='.4'/>
+  <path d='M41,12 Q47,8 54,12' fill='none' stroke='#6600aa' stroke-width='2' stroke-linecap='round'/>
+  <path d='M50,28 Q55,33 60,30' fill='none' stroke='#6600aa' stroke-width='2' stroke-linecap='round'/>
+  <path d='M51,29 L52,32 L54,28 L56,32 L58,29' fill='white' stroke='#6600aa' stroke-width='.8'/>
+  <path d='M40,10 Q34,2 38,0 Q44,4 42,10' fill='#330066' stroke='#9900cc' stroke-width='.8'/>
+  <path d='M50,8 Q46,-2 50,-2 Q56,2 54,8' fill='#440088' stroke='#9900cc' stroke-width='.8'/>
+  <circle cx='38' cy='0' r='2' fill='#cc00ff' opacity='.7'/>
+  <circle cx='50' cy='-2' r='2' fill='#dd44ff' opacity='.7'/>
+  <path d='M62,22 Q74,14 70,4 Q70,16 64,20 Q74,10 70,20 Q76,12 70,22 Q66,26 62,22Z' fill='#9900cc' opacity='.7'/>
+  <path d='M63,22 Q72,14 68,8 Q69,18 64,20Z' fill='#cc44ff' opacity='.5'/>
+  <circle cx='68' cy='12' r='2' fill='#ff88ff' opacity='.6'/>
+  <ellipse cx='20' cy='64' rx='7' ry='5' fill='#330066' transform='rotate(-10,20,64)'/>
+  <ellipse cx='38' cy='65' rx='7' ry='5' fill='#330066' transform='rotate(10,38,65)'/>
+  <path d='M15,67 L13,72 M19,68 L18,73 M23,67 L23,72' stroke='#cc00ff' stroke-width='1.5' stroke-linecap='round'/>
+  <path d='M33,68 L31,73 M37,69 L37,74 M41,68 L43,73' stroke='#cc00ff' stroke-width='1.5' stroke-linecap='round'/>
+  <path d='M42,46 Q50,42 52,48' stroke='#440088' stroke-width='5' stroke-linecap='round' fill='none'/>
+  <path d='M50,48 L48,52 M52,47 L52,52' stroke='#cc44ff' stroke-width='1.2' stroke-linecap='round'/>
+</svg>`,
+    pool:[
+      // ── EASY ────────────────────────────────────────────────
+      {diff:'easy',type:'vocab',prompt:'What does "Tengo un perro" mean?',answer:'I have a dog',
+       choices:['I have a dog','I have a cat','I have a rabbit','I have a snake','I have a guinea pig']},
+      {diff:'easy',type:'vocab',prompt:'What does "Tengo un gato" mean?',answer:'I have a cat',
+       choices:['I have a cat','I have a dog','I have a rabbit','I have a fish','I have a mouse']},
+      {diff:'easy',type:'vocab',prompt:'"Verde" means…',answer:'green',
+       choices:['green','blue','yellow','red','brown']},
+      {diff:'easy',type:'vocab',prompt:'"Rojo/a" means…',answer:'red',
+       choices:['red','orange','pink','yellow','green']},
+      {diff:'easy',type:'vocab',prompt:'"Azul" means…',answer:'blue',
+       choices:['blue','green','purple','grey','black']},
+      {diff:'easy',type:'builder',prompt:'Build: "I have a pink cat."',answer:'Tengo un gato rosa.',
+       words:['Tengo','un','gato','rosa.'],extraSpares:['rojo.','una','serpiente','verde.']},
+      {diff:'easy',type:'comp',context:'"Tengo un perro. Se llama Rex. Es muy grande y negro."',
+       question:'What colour is Rex the dog?',answer:'black (negro)',
+       choices:['black (negro)','red (rojo)','white (blanco)','brown (marrón)','blue (azul)']},
+      // ── NORMAL ──────────────────────────────────────────────
+      {diff:'normal',type:'vocab',prompt:'What does "Tengo un conejo" mean?',answer:'I have a rabbit',
+       choices:['I have a rabbit','I have a fish','I have a cat','I have a snake','I have a mouse']},
+      {diff:'normal',type:'vocab',prompt:'"Amarillo/a" means…',answer:'yellow',
+       choices:['yellow','green','blue','orange','pink']},
+      {diff:'normal',type:'vocab',prompt:'"Negro/a" means…',answer:'black',
+       choices:['black','white','grey','brown','blue']},
+      {diff:'normal',type:'vocab',prompt:'"Marrón" means…',answer:'brown',
+       choices:['brown','orange','red','yellow','grey']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi perro __ muy grande."',answer:'es',
+       choices:['es','soy','eres','está','son']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi gato __ rosa y blanco."',answer:'es',
+       choices:['es','soy','eres','son','está']},
+      {diff:'normal',type:'comp',context:'"Me llamo Zoe. Tengo una cobaya marrón y blanca. Es muy tranquila y bastante tonta."',
+       question:'What two colours is the guinea pig?',answer:'brown and white',
+       choices:['brown and white','black and white','yellow and brown','pink and white','grey and white']},
+      // ── HARD ────────────────────────────────────────────────
+      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta: "No tengo __ mascotas."',answer:'ninguna',
+       choices:['ninguna','alguna','mucha','unos','las']},
+      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta del adjetivo: "Mis peces son __."',answer:'rojos',
+       choices:['rojos','rojo','roja','rojas','rojito']},
+      {diff:'hard',type:'grammar',prompt:'Completa: "Mi serpiente es verde y __." (black — fem.)',answer:'negra',
+       choices:['negra','negro','negros','negras','negrura']},
+      {diff:'hard',type:'builder',prompt:'Escribe en español: "My snake is green and black."',answer:'Mi serpiente es verde y negra.',
+       words:['Mi','serpiente','es','verde','y','negra.'],extraSpares:['roja.','azul','blanca.','gato','negro.','Mi perro']},
+      {diff:'hard',type:'comp',context:'"Tengo un perro negro, un gato blanco y una serpiente verde. No tengo peces ni conejos."',
+       question:'¿Cuántas mascotas tiene? (How many pets?)',answer:'3',
+       choices:['3','2','4','5','1']},
+      {diff:'hard',type:'comp',context:'"Mi cobaya se llama Mochi. Es marrón y blanca. Mi perro se llama Max. Es negro y muy grande."',
+       question:'¿De qué color es Max? (What colour is Max?)',answer:'negro',
+       choices:['negro','marrón','blanco','verde','azul']},
+    ]
+  },
+];
+
+const TOTAL_Q=8;
+
+// ── Shuffle helper ──────────────────────────────────────
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// ── Which question diffs are allowed for selectedDiff ───
+function allowedDiffs(){
+  if(selectedDiff==='easy')   return ['easy'];
+  if(selectedDiff==='mid')    return ['easy','normal'];
+  return ['easy','normal','hard']; // hard = all
+}
+
+// ── Build a random 8-question session ───────────────────
+// Filters pool by selectedDiff, then distributes by typeWeights
+function buildSession(worldIdx){
+  const allowed=allowedDiffs();
+  const raw=WORLDS[worldIdx].pool.filter(q=>allowed.includes(q.diff));
+  const weights=WORLD_DIFF[worldIdx].typeWeights;
+  const byType={vocab:[],grammar:[],builder:[],comp:[]};
+  raw.forEach(q=>byType[q.type].push(q));
+  Object.keys(byType).forEach(t=>{ byType[t]=shuffle(byType[t]); });
+
+  // Distribute 8 slots proportionally by weight, min 1 per available type
+  const types=['vocab','grammar','builder','comp'];
+  const totalWeight=types.reduce((s,t)=>s+weights[t],0);
+  const slots={};
+  let assigned=0;
+  types.forEach(t=>{
+    slots[t]=byType[t].length>0 ? Math.max(1,Math.round((weights[t]/totalWeight)*TOTAL_Q)) : 0;
+    assigned+=slots[t];
+  });
+  // Adjust rounding to exactly TOTAL_Q
+  while(assigned>TOTAL_Q){
+    const t=types.filter(t=>slots[t]>1).sort((a,b)=>slots[b]-slots[a])[0];
+    if(!t) break; slots[t]--; assigned--;
+  }
+  while(assigned<TOTAL_Q){
+    const t=types.filter(t=>byType[t].length>slots[t]).sort((a,b)=>slots[a]-slots[b])[0];
+    if(!t) break; slots[t]++; assigned++;
+  }
+
+  let session=[];
+  types.forEach(t=>session.push(...byType[t].slice(0,slots[t])));
+
+  // Backfill if pool was short
+  const used=new Set(session);
+  const remaining=shuffle(raw.filter(q=>!used.has(q)));
+  while(session.length<TOTAL_Q && remaining.length>0) session.push(remaining.shift());
+
+  return shuffle(session);
+}
+
+// ═══════════════════════════════════
+//  STATE
+// ═══════════════════════════════════
+let wIdx=0,qIdx=0,coinsEarned=0,totalWrong=0;
+let globalStart=null,globalTimer=null;
+let qTimer=null,qTimerSec=0,qTimerMax=0;
+let activeSession=[];  // the 8 questions for the current world run
+
+// ═══════════════════════════════════
+//  SCREENS
+// ═══════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════
+//  GLOBAL ELAPSED TIMER
+// ═══════════════════════════════════
+function startGlobal(){globalStart=Date.now();}
+function stopGlobal(){return Math.floor((Date.now()-globalStart)/1000);}
+
+// ═══════════════════════════════════
+//  Q COUNTDOWN TIMER
+// ═══════════════════════════════════
+function startQTimer(){
+  clearInterval(qTimer);
+  const cfg=getEffectiveDiff();
+  const wrap=document.getElementById('timer-bar-wrap');
+  if(!cfg.timerSec){
+    wrap.style.display='none';
+    document.getElementById('hud-timer').textContent='⏱ —';
+    return;
+  }
+  wrap.style.display='block';
+  qTimerMax=cfg.timerSec; qTimerSec=cfg.timerSec;
+  tickTimer();
+  qTimer=setInterval(()=>{
+    qTimerSec--;tickTimer();
+    if(qTimerSec<=0){clearInterval(qTimer);onTimeout();}
+  },1000);
+}
+function stopQTimer(){clearInterval(qTimer);}
+function tickTimer(){
+  const pct=qTimerSec/qTimerMax*100;
+  const fill=document.getElementById('timer-bar-fill');
+  fill.style.width=pct+'%';
+  fill.className='timer-bar-fill'+(pct<25?' danger':pct<50?' warn':'');
+  const ht=document.getElementById('hud-timer');
+  ht.textContent=`⏱ ${qTimerSec}s`;
+  ht.className='hud-timer'+(pct<25?' danger':pct<50?' warn':'');
+}
+function onTimeout(){
+  stopQTimer();totalWrong++;
+  document.querySelectorAll('.ans-btn,.word-chip,.build-btn').forEach(b=>{b.disabled=true;b.style.pointerEvents='none';});
+  document.getElementById('timeout-ov').classList.add('show');
+}
+
+// ═══════════════════════════════════
+//  DRAGON PROGRESS TRACK
+// ═══════════════════════════════════
+function buildTrack(){
+  const world=WORLDS[wIdx];
+  const tb=document.getElementById('track-blocks');tb.innerHTML='';
+  // Small spacer left for the rider start position
+  const sp=document.createElement('div');sp.style.cssText='width:42px;flex-shrink:0;';tb.appendChild(sp);
+  // Gem orb slots — empty circles, fill on correct answer
+  for(let i=0;i<TOTAL_Q;i++){
+    const b=document.createElement('div');
+    b.className='track-block empty';b.id=`tb${i}`;
+    b.textContent='◇';tb.appendChild(b);
+  }
+  // Spacer right for the dragon gate
+  const sp2=document.createElement('div');sp2.style.cssText='width:48px;flex-shrink:0;';tb.appendChild(sp2);
+  // Dragon rider emoji
+  document.getElementById('track-mario').innerHTML=world.mario;
+  // Reset gate for new lair
+  const door=document.getElementById('track-door');
+  if(door) door.classList.remove('open');
+  moveRider(0);
+}
+
+function moveRider(coins){
+  const track=document.getElementById('progress-track');
+  const trackW=track.offsetWidth;
+  const doorX=trackW-55;
+  const startX=10;
+  const range=doorX-startX-30;
+  const pct=TOTAL_Q>0?coins/TOTAL_Q:0;
+  const x=startX+pct*range;
+  document.getElementById('track-mario').style.left=x+'px';
+}
+
+function popBlock(idx){
+  const b=document.getElementById(`tb${idx}`);
+  if(b){
+    b.classList.remove('empty');
+    b.classList.add('filled');
+    b.textContent='💎';
+    // ripple
+    b.classList.remove('rippling');
+    void b.offsetWidth;
+    b.classList.add('rippling');
+  }
+}
+
+function spawnCoinPop(x,y){
+  const pop=document.createElement('div');
+  pop.className='coin-pop';pop.textContent='💎';
+  pop.style.cssText=`left:${x}px;top:${y}px;`;
+  document.getElementById('progress-track').appendChild(pop);
+  setTimeout(()=>pop.remove(),750);
+}
+
+function spawnStarBurst(x,y){
+  const s=document.createElement('div');
+  s.className='star-burst';s.textContent='✨';
+  s.style.cssText=`left:${x-12}px;top:${y-12}px;`;
+  document.getElementById('progress-track').appendChild(s);
+  setTimeout(()=>s.remove(),550);
+}
+
+// ═══════════════════════════════════
+//  HUD UPDATE
+// ═══════════════════════════════════
+function updateHUD(){
+  const world=WORLDS[wIdx];
+  document.getElementById('hud-world').textContent=`LAIR ${world.num}`;
+  document.getElementById('hud-coins').textContent=`💎 ×${coinsEarned}`;
+  const hd=document.getElementById('hud-diff');
+  const pdiff=DIFF_CFG[selectedDiff];
+  const wdiff=WORLD_DIFF[wIdx];
+  hd.textContent=`${wdiff.label} · ${pdiff.label}`;
+  hd.className=`hud-diff-badge ${pdiff.cls}`;
+  document.getElementById('banner-title').textContent=world.name;
+  document.getElementById('banner-icon').textContent=world.icon;
+  // coin progress row
+  const row=document.getElementById('coin-progress-row');row.innerHTML='';
+  for(let i=0;i<TOTAL_Q;i++){
+    const d=document.createElement('div');d.className='cp'+(i<coinsEarned?' lit':'');
+    d.id=`cp${i}`;d.textContent='💎';row.appendChild(d);
+  }
+  const lbl=document.createElement('div');lbl.className='cp-label';
+  lbl.textContent=`${coinsEarned}/${TOTAL_Q} GEMS`;row.appendChild(lbl);
+  document.getElementById('q-num').textContent=`Q ${qIdx+1} OF ${TOTAL_Q}`;
+}
+
+// ═══════════════════════════════════
+//  RENDER Q
+// ═══════════════════════════════════
+const TYPE_LABELS={vocab:'📘 VOCAB',grammar:'📝 GRAMMAR',builder:'🧩 BUILD',comp:'📖 COMPREHENSION'};
+const TYPE_BADGE_CLS={vocab:'tbadge-vocab',grammar:'tbadge-grammar',builder:'tbadge-builder',comp:'tbadge-comp'};
+
+function renderQ(){
+  updateHUD();
+  document.getElementById('feedback').textContent='';
+  document.getElementById('feedback').className='feedback';
+  const q=activeSession[qIdx];
+  document.getElementById('banner-qtype').textContent=TYPE_LABELS[q.type];
+  const area=document.getElementById('q-area');area.innerHTML='';
+  const badge=`<div class="type-badge ${TYPE_BADGE_CLS[q.type]}">${TYPE_LABELS[q.type]}</div>`;
+  if(q.type==='vocab')    renderMC(q,area,badge,'WHAT DOES IT MEAN?');
+  else if(q.type==='grammar')  renderMC(q,area,badge,'FILL THE GAP');
+  else if(q.type==='comp')     renderComp(q,area,badge);
+  else if(q.type==='builder')  renderBuilder(q,area,badge);
+  // Card entrance animation
+  const qcard=document.querySelector('.qcard');
+  if(qcard){
+    qcard.classList.remove('entering');
+    void qcard.offsetWidth; // force reflow
+    qcard.classList.add('entering');
+  }
+  startQTimer();
+}
+
+// ── MC (vocab + grammar) ───────────
+function renderMC(q,area,badge,dirLabel){
+  const cfg=getEffectiveDiff();
+  const correct=q.choices[0];
+  let distPool=q.choices.slice(1);
+  // Similar distractors: prefer choices that are close in length/look to correct
+  if(cfg.similarDistractors){
+    distPool.sort((a,b)=>{
+      const da=Math.abs(a.length-correct.length);
+      const db=Math.abs(b.length-correct.length);
+      return da-db;
+    });
+  } else {
+    distPool=distPool.sort(()=>Math.random()-.5);
+  }
+  const distractors=distPool.slice(0,cfg.choices-1);
+  const opts=[correct,...distractors].sort(()=>Math.random()-.5);
+  // Use single column on 5 choices so text stays readable
+  const gridCls=opts.length>=5?'g1':'g2';
+
+  area.innerHTML=`${badge}
+    <div class="prompt-box">
+      <div class="prompt-dir">${dirLabel}</div>
+      <div class="prompt-q">${q.prompt}</div>
+    </div>
+    <div class="ans-grid ${gridCls}" id="ag"></div>`;
+
+  const ag=area.querySelector('#ag');
+  opts.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='ans-btn';b.textContent=c;
+    b.onclick=()=>handleMC(c,correct,b,area.querySelectorAll('.ans-btn'));
+    ag.appendChild(b);
+  });
+}
+
+// ── Comp ────────────────────────────
+function renderComp(q,area,badge){
+  const cfg=getEffectiveDiff();
+  const correct=q.choices[0];
+  let distPool=q.choices.slice(1);
+  if(cfg.similarDistractors){
+    distPool.sort((a,b)=>Math.abs(a.length-correct.length)-Math.abs(b.length-correct.length));
+  } else {
+    distPool=distPool.sort(()=>Math.random()-.5);
+  }
+  const distractors=distPool.slice(0,cfg.choices-1);
+  const opts=[correct,...distractors].sort(()=>Math.random()-.5);
+  const gridCls=opts.length>=5?'g1':'g2';
+
+  area.innerHTML=`${badge}
+    <div class="comp-context">${q.context}</div>
+    <div class="prompt-box">
+      <div class="prompt-dir">COMPREHENSION QUESTION</div>
+      <div class="prompt-q">${q.question}</div>
+    </div>
+    <div class="ans-grid ${gridCls}" id="ag"></div>`;
+
+  const ag=area.querySelector('#ag');
+  opts.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='ans-btn';b.textContent=c;
+    b.onclick=()=>handleMC(c,correct,b,area.querySelectorAll('.ans-btn'));
+    ag.appendChild(b);
+  });
+}
+
+// ── Builder ─────────────────────────
+function renderBuilder(q,area,badge){
+  const cfg=getEffectiveDiff();
+  const spares=q.extraSpares.slice(0,cfg.spares);
+  const bank=[...q.words,...spares].sort(()=>Math.random()-.5);
+  const placed=[];
+
+  area.innerHTML=`${badge}
+    <div class="prompt-box">
+      <div class="prompt-dir">TAP WORDS IN ORDER</div>
+      <div class="prompt-q">${q.prompt}</div>
+    </div>
+    <div class="build-area" id="build-area">
+      <span class="build-placeholder">Tap words below to build your sentence…</span>
+    </div>
+    <div class="word-bank-wrap" id="word-bank"></div>
+    <div class="build-actions">
+      <button class="build-btn check" id="check-btn">✓ CHECK</button>
+      <button class="build-btn clear" id="clear-btn">✕ CLEAR</button>
+    </div>`;
+
+  const buildArea=area.querySelector('#build-area');
+  const wordBank=area.querySelector('#word-bank');
+
+  bank.forEach((w,i)=>{
+    const chip=document.createElement('div');
+    chip.className='word-chip';chip.textContent=w;chip.dataset.i=i;
+    chip.onclick=()=>{
+      if(chip.classList.contains('used')) return;
+      chip.classList.add('used');
+      placed.push({w,i,chip});
+      redraw();
+    };
+    wordBank.appendChild(chip);
+  });
+
+  function redraw(){
+    if(!placed.length){
+      buildArea.innerHTML='<span class="build-placeholder">Tap words below to build your sentence…</span>';
+      buildArea.className='build-area';
+    } else {
+      buildArea.innerHTML='';
+      buildArea.className='build-area';
+      placed.forEach((item,pi)=>{
+        const c=document.createElement('div');
+        c.className='word-chip in-answer';c.textContent=item.w;
+        c.onclick=()=>{
+          placed.splice(pi,1);
+          item.chip.classList.remove('used');
+          redraw();
+        };
+        buildArea.appendChild(c);
+      });
+    }
+  }
+
+  area.querySelector('#clear-btn').onclick=()=>{
+    placed.length=0;
+    wordBank.querySelectorAll('.word-chip').forEach(c=>c.classList.remove('used'));
+    redraw();
+  };
+
+  area.querySelector('#check-btn').onclick=()=>{
+    if(!placed.length){
+      document.getElementById('feedback').textContent='Tap some words first!';return;
+    }
+    const built=placed.map(p=>p.w).join(' ');
+    const norm=s=>s.trim().replace(/\s+/g,' ').toLowerCase();
+    const ok=norm(built)===norm(q.answer);
+    stopQTimer();
+    wordBank.querySelectorAll('.word-chip').forEach(c=>c.style.pointerEvents='none');
+    area.querySelector('#check-btn').disabled=true;
+    area.querySelector('#clear-btn').disabled=true;
+    if(ok){
+      buildArea.classList.add('ok');
+      onCorrect();
+    } else {
+      buildArea.classList.add('bad');
+      const fb=document.getElementById('feedback');
+      fb.textContent=`💀 Correct: ${q.answer}`;fb.className='feedback bad';
+      playTone('wrong');
+      totalWrong++;setTimeout(advance,1900);
+    }
+  };
+}
+
+// ── MC handler ──────────────────────
+function handleMC(chosen,answer,btn,allBtns){
+  stopQTimer();
+  allBtns.forEach(b=>b.disabled=true);
+  if(chosen===answer){
+    btn.classList.add('correct');onCorrect();
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b=>{if(b.textContent===answer)b.classList.add('correct');});
+    const fb=document.getElementById('feedback');
+    fb.textContent=`💀 Correct answer: ${answer}`;fb.className='feedback bad';
+    playTone('wrong');
+    totalWrong++;setTimeout(advance,1900);
+  }
+}
+
+// ── On correct ──────────────────────
+function onCorrect(){
+  const prevCoins=coinsEarned;
+  coinsEarned++;
+  // Light up pip
+  const pip=document.getElementById(`cp${prevCoins}`);
+  if(pip) pip.classList.add('lit');
+  const lbl=document.getElementById('coin-progress-row').querySelector('.cp-label');
+  if(lbl) lbl.textContent=`${coinsEarned}/${TOTAL_Q}`;
+  document.getElementById('hud-coins').textContent=`💎 ×${coinsEarned}`;
+  // Pop block on track
+  popBlock(prevCoins);
+  // Coin pop + star on track
+  const track=document.getElementById('progress-track');
+  const mx=parseFloat(document.getElementById('track-mario').style.left||'10');
+  spawnCoinPop(mx,track.offsetHeight-60);
+  spawnStarBurst(mx+10,track.offsetHeight-70);
+  // Move Mario
+  moveRider(coinsEarned);
+  // Feedback
+  const fb=document.getElementById('feedback');
+  fb.textContent='💎 GEM GET! ¡Correcto!';fb.className='feedback good';
+  playTone('coin');
+  if(coinsEarned>=TOTAL_Q){setTimeout(showClear,800);}
+  else{setTimeout(advance,800);}
+}
+
+function advance(){
+  qIdx++;
+  if(qIdx>=TOTAL_Q){
+    if(coinsEarned>=TOTAL_Q){
+      showClear();
+    } else {
+      // Reshuffle a fresh session — student gets different questions for another attempt
+      activeSession=buildSession(wIdx);
+      qIdx=0;
+      renderQ();
+      window.scrollTo(0,0);
+      const fb=document.getElementById('feedback');
+      fb.textContent=`Keep going! ${TOTAL_Q - coinsEarned} coin${TOTAL_Q-coinsEarned===1?'':'s'} still needed 🪙`;
+      fb.className='feedback bad';
+    }
+    return;
+  }
+  renderQ();window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════
+//  CLEAR
+// ═══════════════════════════════════
+function showClear(){
+  stopQTimer();
+  playTone('clear');
+  // Lift the dragon gate
+  const door=document.getElementById('track-door');
+  if(door) door.classList.add('open');
+  const isLast=wIdx===WORLDS.length-1;
+  document.getElementById('cl-icon').textContent=isLast?'🏆':'🚪';
+  document.getElementById('cl-title').textContent=isLast?'SHADOW DRAGON DEFEATED!':'LAIR UNLOCKED!';
+  document.getElementById('cl-sub').textContent=isLast
+    ?'You recovered all the Spanish scrolls!'
+    :`On to Lair ${WORLDS[wIdx+1].num} — ${WORLDS[wIdx+1].name}`;
+  document.getElementById('next-btn').textContent=isLast?'FINISH! 🏆':'NEXT WORLD ▶';
+  document.getElementById('clear-ov').classList.add('show');
+}
+
+document.getElementById('next-btn').onclick=()=>{
+  document.getElementById('clear-ov').classList.remove('show');
+  if(wIdx===WORLDS.length-1){showWin();}
+  else{
+    fadeTransition(()=>{
+      wIdx++;qIdx=0;coinsEarned=0;
+      activeSession=buildSession(wIdx);
+      applyTheme(wIdx);buildTrack();renderQ();window.scrollTo(0,0);
+    });
+  }
+};
+
+// ═══════════════════════════════════
+//  TIMEOUT RETRY
+// ═══════════════════════════════════
+document.getElementById('retry-btn').onclick=()=>{
+  document.getElementById('timeout-ov').classList.remove('show');
+  qIdx=0;coinsEarned=0;
+  activeSession=buildSession(wIdx);
+  buildTrack();renderQ();window.scrollTo(0,0);
+};
+
+// ═══════════════════════════════════
+//  SOUND ENGINE (Web Audio API)
+// ═══════════════════════════════════
+const AC = (()=>{try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}})();
+
+function playTone(type){
+  if(!AC) return;
+  if(AC.state==='suspended') AC.resume();
+  const t=AC.currentTime;
+
+  if(type==='coin'){
+    // Bright ascending ding
+    [523,659,784].forEach((freq,i)=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.connect(g); g.connect(AC.destination);
+      o.frequency.value=freq; o.type='square';
+      g.gain.setValueAtTime(0.18,t+i*0.07);
+      g.gain.exponentialRampToValueAtTime(0.001,t+i*0.07+0.15);
+      o.start(t+i*0.07); o.stop(t+i*0.07+0.15);
+    });
+  } else if(type==='wrong'){
+    // Low descending buzzer
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.connect(g); g.connect(AC.destination);
+    o.type='sawtooth';
+    o.frequency.setValueAtTime(220,t);
+    o.frequency.exponentialRampToValueAtTime(80,t+0.3);
+    g.gain.setValueAtTime(0.25,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+    o.start(t); o.stop(t+0.35);
+  } else if(type==='clear'){
+    // World clear fanfare — 5 ascending notes
+    const melody=[392,523,659,784,1047];
+    melody.forEach((freq,i)=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.connect(g); g.connect(AC.destination);
+      o.frequency.value=freq; o.type='square';
+      const start=t+i*0.1;
+      g.gain.setValueAtTime(0.2,start);
+      g.gain.exponentialRampToValueAtTime(0.001,start+0.25);
+      o.start(start); o.stop(start+0.25);
+    });
+  } else if(type==='win'){
+    // Victory jingle
+    const notes=[
+      [523,.0],[659,.12],[784,.24],[1047,.36],
+      [784,.52],[1047,.62],[1319,.76]
+    ];
+    notes.forEach(([freq,delay])=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.connect(g); g.connect(AC.destination);
+      o.frequency.value=freq; o.type='square';
+      g.gain.setValueAtTime(0.18,t+delay);
+      g.gain.exponentialRampToValueAtTime(0.001,t+delay+0.22);
+      o.start(t+delay); o.stop(t+delay+0.22);
+    });
+  }
+}
+
+// ═══════════════════════════════════
+//  WIN
+// ═══════════════════════════════════
+function showWin(){
+  const secs=stopGlobal();
+  const m=Math.floor(secs/60),s=secs%60;
+  const timeStr=`${m}:${String(s).padStart(2,'0')}`;
+  const playerName=(document.getElementById('player-name').value.trim()||'Player');
+  const diffLabel=DIFF_CFG[selectedDiff].label;
+
+  document.getElementById('win-time').textContent=timeStr;
+  document.getElementById('win-wrong').textContent=totalWrong;
+  document.getElementById('win-diff').textContent=diffLabel;
+
+  let stars,msg;
+  if(totalWrong===0)      {stars='⭐⭐⭐';msg=`PERFECT SCORE! 🌟 You're a Spanish superstar, ${playerName} — The Sorcerer never stood a chance!`;}
+  else if(totalWrong<=4)  {stars='⭐⭐⭐';msg=`Brilliant work, ${playerName}! Almost flawless — you're a true Dragon Rider!`;}
+  else if(totalWrong<=10) {stars='⭐⭐';msg=`Great effort, ${playerName}! You recovered the scrolls — practise more for 3 stars!`;}
+  else                    {stars='⭐';msg=`You made it out, ${playerName}! Review your Spanish and try again for a better score.`;}
+
+  document.getElementById('win-stars').textContent=stars;
+  document.getElementById('win-msg').textContent=msg;
+  document.getElementById('win-title').innerHTML=`Well done, ${playerName}!<br>You Recovered the Spanish Scrolls!`;
+
+  // Populate print area
+  document.getElementById('print-name').textContent=playerName;
+  document.getElementById('print-stars').textContent=stars;
+  document.getElementById('print-time').textContent=timeStr;
+  document.getElementById('print-wrong').textContent=totalWrong;
+  document.getElementById('print-diff').textContent=diffLabel;
+  document.getElementById('print-msg').textContent=msg;
+
+  playTone('win');
+  showScreen('win-screen');
+}
+
+// ═══════════════════════════════════
+//  START / RESTART
+// ═══════════════════════════════════
+function startGame(){
+  wIdx=0;qIdx=0;coinsEarned=0;totalWrong=0;
+  activeSession=buildSession(0);
+  applyTheme(0);applyParallax(0);buildTrack();startGlobal();
+  showScreen('room-screen');renderQ();
+}
+document.getElementById('start-btn').onclick=startGame;
+// Init parallax on title screen
+applyParallax(0);
+
+document.getElementById('hud-home-btn').onclick=()=>{
+  stopQTimer();
+  document.getElementById('home-confirm-ov').classList.add('show');
+};
+document.getElementById('hc-no').onclick=()=>{
+  document.getElementById('home-confirm-ov').classList.remove('show');
+  startQTimer();
+};
+document.getElementById('hc-yes').onclick=()=>{
+  document.getElementById('home-confirm-ov').classList.remove('show');
+  stopGlobal();stopQTimer();
+  fadeTransition(()=>showScreen('title-screen'));
+};
+
+document.getElementById('play-again-btn').onclick=()=>{
+  stopQTimer();showScreen('title-screen');
+};
+
+document.getElementById('print-btn').onclick=()=>{
+  window.print();
+};
+</script>
+<!-- WORLD INTRO OVERLAY -->
+<div id="world-intro-ov" style="
+  position:fixed;inset:0;z-index:200;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:1rem;text-align:center;padding:2rem;
+  animation:fadeInOv .3s ease;
+">
+  <div id="wi-num" style="font-family:'Press Start 2P',monospace;font-size:.6rem;letter-spacing:4px;color:#fff;opacity:.8;"></div>
+  <div id="wi-icon" style="font-size:5rem;animation:zoomIn .4s cubic-bezier(.36,2,.5,.9);"></div>
+  <div id="wi-name" style="font-family:'Fredoka One',cursive;font-size:clamp(1.8rem,6vw,3rem);color:#fff;text-shadow:4px 4px 0 rgba(0,0,0,.5);letter-spacing:2px;"></div>
+  <div id="wi-desc" style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:#fff;max-width:480px;line-height:1.6;opacity:.9;background:rgba(0,0,0,.3);padding:.8rem 1.2rem;border-radius:0;"></div>
+  <div style="font-family:'Press Start 2P',monospace;font-size:.45rem;color:#fff;opacity:.6;letter-spacing:2px;margin-top:.5rem;animation:blink2 1s step-end infinite;">PRESS ANY KEY OR TAP TO START</div>
+</div>
+@keyframes fadeInOv{from{opacity:0;}to{opacity:1;}}
+@keyframes blink2{50%{opacity:0;}}
+
+</body>
+</html>
