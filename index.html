@@ -705,12 +705,23 @@ h1.game-title{
 /* ══════════════════════════════════════
    WIN SCREEN
 ══════════════════════════════════════ */
-#win-screen{justify-content:center;gap:.9rem;text-align:center;}
+#win-screen{
+  justify-content:center;gap:.9rem;text-align:center;
+  padding:2rem 1rem 80px;
+}
+/* Dark overlay behind win screen content */
+#win-screen::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:rgba(0,0,0,0.82);pointer-events:none;
+}
+#win-screen > *{position:relative;z-index:1;}
+
 .win-trophy{font-size:8rem;animation:bounceY .65s ease-in-out infinite alternate;}
 .win-title{
-  font-family:'Fredoka One',cursive;
-  font-size:clamp(2rem,7vw,3.5rem);
-  color:#d01000;text-shadow:4px 4px 0 #fff,6px 6px 0 #800000;
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.6rem,5vw,2.8rem);
+  color:#f8d800;
+  text-shadow:0 0 20px rgba(248,216,0,.5),0 2px 8px rgba(0,0,0,.8);
   letter-spacing:2px;line-height:1.2;
 }
 .coin-burst{font-size:2.2rem;letter-spacing:8px;margin:.3rem 0;}
@@ -719,27 +730,33 @@ h1.game-title{
   max-width:560px;width:100%;margin:.3rem 0;
 }
 .stat-box{
-  background:#fff9d4;border:4px solid #1a0800;box-shadow:4px 4px 0 #1a0800;
+  background:rgba(0,0,0,0.5);
+  border:2px solid rgba(255,255,255,0.2);
   padding:.9rem 1rem;
+  backdrop-filter:blur(4px);
 }
-.stat-label{font-family:'Press Start 2P',monospace;font-size:clamp(.38rem,1.2vw,.55rem);color:#888;letter-spacing:1px;margin-bottom:.4rem;}
-.stat-val{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,4vw,2.2rem);color:#d01000;}
+.stat-label{font-family:'Press Start 2P',monospace;font-size:clamp(.38rem,1.2vw,.55rem);color:rgba(255,255,255,0.5);letter-spacing:1px;margin-bottom:.4rem;}
+.stat-val{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,4vw,2.2rem);color:#f8d800;}
 .star-row{font-size:3rem;letter-spacing:8px;margin:.2rem 0;}
 .win-msg{
   font-family:'Nunito',sans-serif;font-weight:800;
   font-size:clamp(1rem,2.5vw,1.3rem);max-width:520px;line-height:1.6;
-  background:#fff;border:4px solid #1a0800;box-shadow:4px 4px 0 #1a0800;
-  padding:1rem 1.2rem;color:#1a0800;
+  background:rgba(255,255,255,0.08);
+  border:2px solid rgba(255,255,255,0.2);
+  padding:1rem 1.2rem;color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
 }
 .win-btn{
   font-family:'Fredoka One',cursive;
   font-size:clamp(1.4rem,4vw,2rem);
-  padding:1rem 3rem;background:#d01000;color:#fff;
-  border:5px solid #1a0800;box-shadow:7px 7px 0 #1a0800;cursor:pointer;
+  padding:1rem 3rem;background:#cc0000;color:#fff;
+  border:3px solid rgba(255,255,255,0.4);
+  box-shadow:0 0 20px rgba(200,0,0,.4);
+  cursor:pointer;
   transition:transform .08s,box-shadow .08s;margin-top:.3rem;
   letter-spacing:2px;
 }
-.win-btn:hover{transform:translate(3px,3px);box-shadow:4px 4px 0 #1a0800;}
+.win-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(200,0,0,.6);}
 
 /* ── NAME ENTRY ──────────────────────────────────────── */
 .name-wrap{
@@ -767,10 +784,12 @@ h1.game-title{
   font-family:'Fredoka One',cursive;
   font-size:clamp(1.2rem,3.5vw,1.6rem);
   padding:.8rem 2.5rem;background:#00a800;color:#fff;
-  border:5px solid #1a0800;box-shadow:7px 7px 0 #1a0800;cursor:pointer;
+  border:3px solid rgba(255,255,255,0.3);
+  box-shadow:0 0 16px rgba(0,168,0,.4);
+  cursor:pointer;
   transition:transform .08s,box-shadow .08s;letter-spacing:2px;
 }
-.print-btn:hover{background:#00c828;transform:translate(3px,3px);box-shadow:4px 4px 0 #1a0800;}
+.print-btn:hover{background:#00c828;transform:scale(1.05);box-shadow:0 0 24px rgba(0,200,0,.5);}
 
 /* ── PRINT STYLES ────────────────────────────────────── */
 @media print{
@@ -2128,8 +2147,10 @@ function tickTimer(){
   ht.className='hud-timer'+(pct<25?' danger':pct<50?' warn':'');
 }
 function onTimeout(){
-  stopQTimer();totalWrong++;
-  document.querySelectorAll('.ans-btn,.word-chip,.build-btn').forEach(b=>{b.disabled=true;b.style.pointerEvents='none';});
+  stopQTimer();
+  totalWrong++;
+  // Disable via class, not inline style — inline style persists after DOM rebuild
+  document.querySelectorAll('.ans-btn,.word-chip,.build-btn').forEach(b=>{b.disabled=true;});
   document.getElementById('timeout-ov').classList.add('show');
 }
 
@@ -2229,12 +2250,14 @@ const TYPE_LABELS={vocab:'📘 VOCAB',grammar:'📝 GRAMMAR',builder:'🧩 BUILD
 const TYPE_BADGE_CLS={vocab:'tbadge-vocab',grammar:'tbadge-grammar',builder:'tbadge-builder',comp:'tbadge-comp'};
 
 function renderQ(){
+  stopQTimer(); // kill any running timer before rebuilding
   updateHUD();
   document.getElementById('feedback').textContent='';
   document.getElementById('feedback').className='feedback';
   const q=activeSession[qIdx];
   document.getElementById('banner-qtype').textContent=TYPE_LABELS[q.type];
   const area=document.getElementById('q-area');
+  area.style.pointerEvents=''; // reset any pointer-event block
   // Remove children one by one — prevents stale disabled buttons carrying over
   while(area.firstChild) area.removeChild(area.firstChild);
   const badge=`<div class="type-badge ${TYPE_BADGE_CLS[q.type]}">${TYPE_LABELS[q.type]}</div>`;
@@ -2380,7 +2403,9 @@ function renderBuilder(q,area,badge){
     redraw();
   };
 
-  area.querySelector('#check-btn').onclick=()=>{
+  const checkBtn=area.querySelector('#check-btn');
+  checkBtn.onclick=()=>{
+    if(checkBtn.disabled) return; // guard double-tap
     if(!placed.length){
       document.getElementById('feedback').textContent='Tap some words first!';return;
     }
@@ -2388,9 +2413,9 @@ function renderBuilder(q,area,badge){
     const norm=s=>s.trim().replace(/\s+/g,' ').toLowerCase();
     const ok=norm(built)===norm(q.answer);
     stopQTimer();
-    wordBank.querySelectorAll('.word-chip').forEach(c=>c.style.pointerEvents='none');
-    area.querySelector('#check-btn').disabled=true;
+    checkBtn.disabled=true;
     area.querySelector('#clear-btn').disabled=true;
+    wordBank.querySelectorAll('.word-chip').forEach(c=>c.disabled=true);
     if(ok){
       buildArea.classList.add('ok');
       onCorrect();
@@ -2406,6 +2431,7 @@ function renderBuilder(q,area,badge){
 
 // ── MC handler ──────────────────────
 function handleMC(chosen,answer,btn,allBtns){
+  if(btn.disabled) return; // guard against double-tap
   stopQTimer();
   allBtns.forEach(b=>b.disabled=true);
   if(chosen===answer){
@@ -2422,6 +2448,7 @@ function handleMC(chosen,answer,btn,allBtns){
 
 // ── On correct ──────────────────────
 function onCorrect(){
+  stopQTimer(); // kill timer immediately on correct answer
   const prevCoins=coinsEarned;
   coinsEarned++;
   // Light up pip
@@ -2448,6 +2475,7 @@ function onCorrect(){
 }
 
 function advance(){
+  stopQTimer(); // always kill timer before advancing
   qIdx++;
   if(qIdx>=TOTAL_Q){
     if(coinsEarned>=TOTAL_Q){
@@ -2459,12 +2487,13 @@ function advance(){
       window.scrollTo(0,0);
       setTimeout(()=>{
         const fb=document.getElementById('feedback');
-        if(fb) { fb.textContent=`Keep going! ${TOTAL_Q - coinsEarned} gem${TOTAL_Q-coinsEarned===1?'':'s'} still needed 💎`; fb.className='feedback bad'; }
+        if(fb){ fb.textContent=`Keep going! ${TOTAL_Q-coinsEarned} gem${TOTAL_Q-coinsEarned===1?'':'s'} still needed 💎`; fb.className='feedback bad'; }
       },100);
     }
     return;
   }
-  renderQ();window.scrollTo(0,0);
+  renderQ();
+  window.scrollTo(0,0);
 }
 
 // ═══════════════════════════════════
