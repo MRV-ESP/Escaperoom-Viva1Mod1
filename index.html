@@ -1315,7 +1315,10 @@ h1.game-title{
 </div>
 
 <script>
-// ── Global UI handlers declared first so inline onclick attributes work ──
+// ── Pending timeout tracker — prevents ghost timeouts firing on new questions ──
+let pendingTimeout=null;
+function setPending(fn,ms){ clearTimeout(pendingTimeout); pendingTimeout=setTimeout(fn,ms); }
+function cancelPending(){ clearTimeout(pendingTimeout); pendingTimeout=null; }
 var selectedDiff='easy';
 function selectDiff(el,d){
   selectedDiff=d;
@@ -1324,6 +1327,7 @@ function selectDiff(el,d){
 }
 function handlePreviewClick(e,worldIdx){
   if(!e.shiftKey) return;
+  cancelPending(); stopQTimer();
   wIdx=worldIdx; qIdx=0; coinsEarned=0; totalWrong=0;
   activeSession=buildSession(worldIdx);
   applyTheme(worldIdx); buildTrack(); startGlobal();
@@ -2250,7 +2254,7 @@ const TYPE_LABELS={vocab:'📘 VOCAB',grammar:'📝 GRAMMAR',builder:'🧩 BUILD
 const TYPE_BADGE_CLS={vocab:'tbadge-vocab',grammar:'tbadge-grammar',builder:'tbadge-builder',comp:'tbadge-comp'};
 
 function renderQ(){
-  stopQTimer(); // kill any running timer before rebuilding
+  cancelPending(); stopQTimer(); // kill ghost timeouts and timer
   updateHUD();
   document.getElementById('feedback').textContent='';
   document.getElementById('feedback').className='feedback';
@@ -2365,11 +2369,13 @@ function renderBuilder(q,area,badge){
   const buildArea=area.querySelector('#build-area');
   const wordBank=area.querySelector('#word-bank');
 
+  let builderLocked=false; // prevents interaction after check is pressed
+
   bank.forEach((w,i)=>{
     const chip=document.createElement('div');
     chip.className='word-chip';chip.textContent=w;chip.dataset.i=i;
     chip.onclick=()=>{
-      if(chip.classList.contains('used')) return;
+      if(builderLocked || chip.classList.contains('used')) return;
       chip.classList.add('used');
       placed.push({w,i,chip});
       redraw();
@@ -2378,6 +2384,7 @@ function renderBuilder(q,area,badge){
   });
 
   function redraw(){
+    if(builderLocked) return; // don't redraw after answer submitted
     if(!placed.length){
       buildArea.innerHTML='<span class="build-placeholder">Tap words below to build your sentence…</span>';
       buildArea.className='build-area';
@@ -2388,6 +2395,7 @@ function renderBuilder(q,area,badge){
         const c=document.createElement('div');
         c.className='word-chip in-answer';c.textContent=item.w;
         c.onclick=()=>{
+          if(builderLocked) return;
           placed.splice(pi,1);
           item.chip.classList.remove('used');
           redraw();
@@ -2398,6 +2406,7 @@ function renderBuilder(q,area,badge){
   }
 
   area.querySelector('#clear-btn').onclick=()=>{
+    if(builderLocked) return;
     placed.length=0;
     wordBank.querySelectorAll('.word-chip').forEach(c=>c.classList.remove('used'));
     redraw();
@@ -2405,17 +2414,17 @@ function renderBuilder(q,area,badge){
 
   const checkBtn=area.querySelector('#check-btn');
   checkBtn.onclick=()=>{
-    if(checkBtn.disabled) return; // guard double-tap
+    if(builderLocked || checkBtn.disabled) return;
     if(!placed.length){
       document.getElementById('feedback').textContent='Tap some words first!';return;
     }
+    builderLocked=true; // lock all chip interaction immediately
     const built=placed.map(p=>p.w).join(' ');
     const norm=s=>s.trim().replace(/\s+/g,' ').toLowerCase();
     const ok=norm(built)===norm(q.answer);
-    stopQTimer();
+    cancelPending(); stopQTimer();
     checkBtn.disabled=true;
     area.querySelector('#clear-btn').disabled=true;
-    wordBank.querySelectorAll('.word-chip').forEach(c=>c.disabled=true);
     if(ok){
       buildArea.classList.add('ok');
       onCorrect();
@@ -2424,7 +2433,7 @@ function renderBuilder(q,area,badge){
       const fb=document.getElementById('feedback');
       fb.textContent=`💀 Correct: ${q.answer}`;fb.className='feedback bad';
       playTone('wrong');
-      totalWrong++;setTimeout(advance,1900);
+      totalWrong++;setPending(advance,1900);
     }
   };
 }
@@ -2432,7 +2441,7 @@ function renderBuilder(q,area,badge){
 // ── MC handler ──────────────────────
 function handleMC(chosen,answer,btn,allBtns){
   if(btn.disabled) return; // guard against double-tap
-  stopQTimer();
+  cancelPending(); stopQTimer();
   allBtns.forEach(b=>b.disabled=true);
   if(chosen===answer){
     btn.classList.add('correct');onCorrect();
@@ -2442,7 +2451,7 @@ function handleMC(chosen,answer,btn,allBtns){
     const fb=document.getElementById('feedback');
     fb.textContent=`💀 Correct answer: ${answer}`;fb.className='feedback bad';
     playTone('wrong');
-    totalWrong++;setTimeout(advance,1900);
+    totalWrong++;setPending(advance,1900);
   }
 }
 
@@ -2470,12 +2479,12 @@ function onCorrect(){
   const fb=document.getElementById('feedback');
   fb.textContent='💎 GEM GET! ¡Correcto!';fb.className='feedback good';
   playTone('coin');
-  if(coinsEarned>=TOTAL_Q){setTimeout(showClear,800);}
-  else{setTimeout(advance,800);}
+  if(coinsEarned>=TOTAL_Q){setPending(showClear,800);}
+  else{setPending(advance,800);}
 }
 
 function advance(){
-  stopQTimer(); // always kill timer before advancing
+  cancelPending(); stopQTimer(); // kill any ghost timeouts and timer
   qIdx++;
   if(qIdx>=TOTAL_Q){
     if(coinsEarned>=TOTAL_Q){
@@ -2792,6 +2801,7 @@ function showWin(){
 //  START / RESTART
 // ═══════════════════════════════════
 function startGame(){
+  cancelPending(); stopQTimer();
   wIdx=0;qIdx=0;coinsEarned=0;totalWrong=0;
   activeSession=buildSession(0);
   applyTheme(0);applyParallax(0);buildTrack();startGlobal();
