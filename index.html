@@ -802,8 +802,122 @@ h1.game-title{
 @keyframes driftNear{from{transform:translateX(0);}to{transform:translateX(-48px);}}
 
 /* ══════════════════════════════════════
-   SCREEN FADE TRANSITIONS
+   COMBINATION LOCK BONUS CHALLENGE
 ══════════════════════════════════════ */
+#lock-ov{
+  position:fixed;inset:0;z-index:502;
+  background:rgba(0,0,0,0.92);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.2rem;text-align:center;padding:1.5rem;
+}
+#lock-ov.show{display:flex;}
+
+.lock-title{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.2rem,4vw,1.8rem);
+  color:#f8d800;letter-spacing:3px;
+  text-shadow:0 0 16px rgba(248,216,0,.5);
+}
+.lock-subtitle{
+  font-family:'Press Start 2P',monospace;
+  font-size:.52rem;color:#ccc;letter-spacing:2px;line-height:2;
+}
+/* The 3 symbol slots */
+.lock-symbols{
+  display:flex;gap:1.2rem;align-items:center;justify-content:center;
+  margin:.4rem 0;
+}
+.lock-slot{
+  width:72px;height:72px;
+  border:3px solid rgba(255,255,255,0.2);
+  border-radius:8px;
+  background:rgba(0,0,0,0.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.6rem;
+  transition:all .3s;
+  position:relative;
+}
+.lock-slot.unlocked{
+  border-color:#f8d800;
+  background:rgba(248,216,0,0.15);
+  animation:slotUnlock .4s cubic-bezier(.36,2,.5,.9);
+}
+.lock-slot.locked{
+  border-color:rgba(255,255,255,0.15);
+  filter:grayscale(1) brightness(.4);
+}
+@keyframes slotUnlock{
+  0%{transform:scale(.6) rotate(-10deg);opacity:0;}
+  60%{transform:scale(1.2) rotate(4deg);}
+  100%{transform:scale(1) rotate(0deg);opacity:1;}
+}
+
+/* Question area inside lock */
+.lock-q-wrap{
+  width:100%;max-width:540px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:6px;
+  padding:1.2rem 1.4rem;
+}
+.lock-q-num{
+  font-family:'Press Start 2P',monospace;
+  font-size:.45rem;color:#888;letter-spacing:2px;margin-bottom:.6rem;
+}
+.lock-q-text{
+  font-family:'Cinzel',serif;
+  font-size:clamp(1.1rem,3vw,1.6rem);
+  color:#fff;margin-bottom:1rem;line-height:1.4;
+  text-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+.lock-choices{
+  display:grid;grid-template-columns:1fr 1fr;gap:.6rem;
+}
+.lock-choice-btn{
+  font-family:'Nunito',sans-serif;font-weight:900;
+  font-size:clamp(.95rem,2.5vw,1.2rem);
+  padding:.7rem .5rem;
+  background:rgba(0,0,0,0.4);
+  border:2px solid rgba(255,255,255,0.2);
+  color:#fff;cursor:pointer;
+  transition:background .1s,border-color .1s,transform .08s;
+  min-height:54px;
+  display:flex;align-items:center;justify-content:center;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+.lock-choice-btn:hover:not(:disabled){
+  background:rgba(248,216,0,0.2);
+  border-color:#f8d800;
+  transform:translateY(-2px);
+}
+.lock-choice-btn.lk-correct{
+  background:rgba(0,180,0,0.5)!important;
+  border-color:#00ff88!important;
+  animation:slotUnlock .3s ease;
+}
+.lock-choice-btn.lk-wrong{
+  background:rgba(180,0,0,0.5)!important;
+  border-color:#ff4466!important;
+  animation:btnShake .35s ease;
+}
+.lock-choice-btn:disabled{cursor:default;}
+
+.lock-feedback{
+  font-family:'Fredoka One',cursive;
+  font-size:1.1rem;min-height:1.6em;color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+}
+.lock-feedback.good{color:#00ff88;}
+.lock-feedback.bad {color:#ff6666;}
+
+/* Gate smash open animation */
+@keyframes gateSmash{
+  0%{transform:scale(1);}
+  30%{transform:scale(1.4) rotate(5deg);}
+  60%{transform:scale(.8) rotate(-3deg);}
+  100%{transform:scale(1.1) translateY(-8px);opacity:0;}
+}
+.lock-gate-open{animation:gateSmash .6s ease forwards;}
 .screen-fade{
   position:fixed;inset:0;z-index:600;
   background:#000;opacity:0;pointer-events:none;
@@ -1084,6 +1198,23 @@ h1.game-title{
     <div class="q-num" id="q-num">Q 1 OF 8</div>
     <div id="q-area"></div>
     <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<!-- COMBINATION LOCK BONUS CHALLENGE -->
+<div id="lock-ov">
+  <div class="lock-title" id="lock-title">🔐 UNLOCK THE GATE!</div>
+  <div class="lock-subtitle" id="lock-subtitle">Answer 3 questions to break the seal</div>
+  <div class="lock-symbols">
+    <div class="lock-slot locked" id="lock-s0">🔒</div>
+    <div class="lock-slot locked" id="lock-s1">🔒</div>
+    <div class="lock-slot locked" id="lock-s2">🔒</div>
+  </div>
+  <div class="lock-q-wrap">
+    <div class="lock-q-num" id="lock-q-num">QUESTION 1 OF 3</div>
+    <div class="lock-q-text" id="lock-q-text"></div>
+    <div class="lock-choices" id="lock-choices"></div>
+    <div class="lock-feedback" id="lock-feedback"></div>
   </div>
 </div>
 
@@ -2103,17 +2234,18 @@ function renderQ(){
   document.getElementById('feedback').className='feedback';
   const q=activeSession[qIdx];
   document.getElementById('banner-qtype').textContent=TYPE_LABELS[q.type];
-  const area=document.getElementById('q-area');area.innerHTML='';
+  const area=document.getElementById('q-area');
+  // Remove children one by one — prevents stale disabled buttons carrying over
+  while(area.firstChild) area.removeChild(area.firstChild);
   const badge=`<div class="type-badge ${TYPE_BADGE_CLS[q.type]}">${TYPE_LABELS[q.type]}</div>`;
-  if(q.type==='vocab')    renderMC(q,area,badge,'WHAT DOES IT MEAN?');
+  if(q.type==='vocab')         renderMC(q,area,badge,'WHAT DOES IT MEAN?');
   else if(q.type==='grammar')  renderMC(q,area,badge,'FILL THE GAP');
   else if(q.type==='comp')     renderComp(q,area,badge);
   else if(q.type==='builder')  renderBuilder(q,area,badge);
-  // Card entrance animation
   const qcard=document.querySelector('.qcard');
   if(qcard){
     qcard.classList.remove('entering');
-    void qcard.offsetWidth; // force reflow
+    void qcard.offsetWidth;
     qcard.classList.add('entering');
   }
   startQTimer();
@@ -2321,14 +2453,14 @@ function advance(){
     if(coinsEarned>=TOTAL_Q){
       showClear();
     } else {
-      // Reshuffle a fresh session — student gets different questions for another attempt
       activeSession=buildSession(wIdx);
       qIdx=0;
       renderQ();
       window.scrollTo(0,0);
-      const fb=document.getElementById('feedback');
-      fb.textContent=`Keep going! ${TOTAL_Q - coinsEarned} coin${TOTAL_Q-coinsEarned===1?'':'s'} still needed 🪙`;
-      fb.className='feedback bad';
+      setTimeout(()=>{
+        const fb=document.getElementById('feedback');
+        if(fb) { fb.textContent=`Keep going! ${TOTAL_Q - coinsEarned} gem${TOTAL_Q-coinsEarned===1?'':'s'} still needed 💎`; fb.className='feedback bad'; }
+      },100);
     }
     return;
   }
@@ -2336,33 +2468,189 @@ function advance(){
 }
 
 // ═══════════════════════════════════
-//  CLEAR
+//  COMBINATION LOCK BONUS CHALLENGE
 // ═══════════════════════════════════
+const LOCK_DATA = [
+  // Lair 1: Greetings — 3 questions, symbols for each
+  {
+    title:'🔥 BREAK THE FIRE SEAL!',
+    subtitle:'Answer 3 questions to unlock the Fire Dragon\'s gate',
+    symbols:['🔥','⚔️','🐉'],
+    questions:[
+      { q:'How do you say "Hello" in Spanish?',
+        choices:['¡Hola!','¡Adiós!','Gracias','Por favor'], answer:'¡Hola!' },
+      { q:'Complete: "Me ___ Carlos." (I am called)',
+        choices:['llamo','llamas','soy','estoy'], answer:'llamo' },
+      { q:'What does "¿Dónde vives?" mean?',
+        choices:['Where do you live?','What is your name?','How are you?','Where are you from?'], answer:'Where do you live?' },
+    ]
+  },
+  // Lair 2: Personality
+  {
+    title:'❄️ SHATTER THE ICE SEAL!',
+    subtitle:'Answer 3 questions to unlock the Ice Dragon\'s gate',
+    symbols:['❄️','💎','🐉'],
+    questions:[
+      { q:'What does "simpático" mean?',
+        choices:['Friendly','Shy','Funny','Serious'], answer:'Friendly' },
+      { q:'Complete: "Soy ___ tímido." (a little)',
+        choices:['un poco','muy','bastante','también'], answer:'un poco' },
+      { q:'Which word means "calm"?',
+        choices:['tranquilo','divertido','generoso','serio'], answer:'tranquilo' },
+    ]
+  },
+  // Lair 3: Family
+  {
+    title:'🌿 BREAK THE FOREST SEAL!',
+    subtitle:'Answer 3 questions to unlock the Forest Dragon\'s gate',
+    symbols:['🌿','🌳','🐉'],
+    questions:[
+      { q:'What does "hermana" mean?',
+        choices:['Sister','Brother','Mother','Father'], answer:'Sister' },
+      { q:'Complete: "___ un hermano." (I have)',
+        choices:['Tengo','Tienes','Tiene','Soy'], answer:'Tengo' },
+      { q:'What does "hijo único" mean?',
+        choices:['Only child','One brother','Big family','No sisters'], answer:'Only child' },
+    ]
+  },
+  // Lair 4: Pets/colours — final boss
+  {
+    title:'💀 BREAK THE SHADOW SEAL!',
+    subtitle:'Defeat the Sorcerer — answer 3 final questions!',
+    symbols:['💀','⚡','🐉'],
+    questions:[
+      { q:'What does "serpiente" mean?',
+        choices:['Snake','Cat','Dog','Rabbit'], answer:'Snake' },
+      { q:'Complete: "Mi gato es ___." (black — masculine)',
+        choices:['negro','negra','negros','negras'], answer:'negro' },
+      { q:'How do you say "I have a guinea pig"?',
+        choices:['Tengo una cobaya','Tengo un perro','Soy una cobaya','Tengo un gato'], answer:'Tengo una cobaya' },
+    ]
+  }
+];
+
+let lockIdx=0; // current question index within the lock (0–2)
+let lockWIdx=0; // which lair's lock
+
+function showLock(wIdx_){
+  lockWIdx=wIdx_;
+  lockIdx=0;
+  const data=LOCK_DATA[lockWIdx];
+  document.getElementById('lock-title').textContent=data.title;
+  document.getElementById('lock-subtitle').textContent=data.subtitle;
+  // Reset slots
+  [0,1,2].forEach(i=>{
+    const s=document.getElementById(`lock-s${i}`);
+    s.textContent='🔒';
+    s.className='lock-slot locked';
+  });
+  renderLockQ();
+  document.getElementById('lock-ov').classList.add('show');
+}
+
+function renderLockQ(){
+  const data=LOCK_DATA[lockWIdx];
+  const q=data.questions[lockIdx];
+  document.getElementById('lock-q-num').textContent=`QUESTION ${lockIdx+1} OF 3`;
+  document.getElementById('lock-q-text').textContent=q.q;
+  document.getElementById('lock-feedback').textContent='';
+  document.getElementById('lock-feedback').className='lock-feedback';
+  const choicesEl=document.getElementById('lock-choices');
+  choicesEl.innerHTML='';
+  const shuffled=[...q.choices].sort(()=>Math.random()-.5);
+  shuffled.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='lock-choice-btn';
+    b.textContent=c;
+    b.onclick=()=>handleLockChoice(c,q.answer,b,choicesEl.querySelectorAll('.lock-choice-btn'));
+    choicesEl.appendChild(b);
+  });
+}
+
+function handleLockChoice(chosen,answer,btn,allBtns){
+  allBtns.forEach(b=>b.disabled=true);
+  const fb=document.getElementById('lock-feedback');
+  if(chosen===answer){
+    btn.classList.add('lk-correct');
+    fb.textContent='✓ ¡Correcto! Seal broken!';
+    fb.className='lock-feedback good';
+    playTone('coin');
+    // Unlock the slot
+    setTimeout(()=>{
+      const slot=document.getElementById(`lock-s${lockIdx}`);
+      slot.textContent=LOCK_DATA[lockWIdx].symbols[lockIdx];
+      slot.className='lock-slot unlocked';
+      lockIdx++;
+      if(lockIdx>=3){
+        // All 3 unlocked — gate smashes open
+        setTimeout(()=>lockComplete(),700);
+      } else {
+        setTimeout(()=>renderLockQ(),900);
+      }
+    },500);
+  } else {
+    btn.classList.add('lk-wrong');
+    // Show correct answer
+    allBtns.forEach(b=>{if(b.textContent===answer) b.classList.add('lk-correct');});
+    fb.textContent=`✗ Correct: ${answer} — try the next one!`;
+    fb.className='lock-feedback bad';
+    playTone('wrong');
+    // Still advance — we don't block on wrong (keeps flow going)
+    setTimeout(()=>{
+      const slot=document.getElementById(`lock-s${lockIdx}`);
+      slot.textContent='❌';
+      slot.className='lock-slot unlocked';
+      lockIdx++;
+      if(lockIdx>=3){
+        setTimeout(()=>lockComplete(),700);
+      } else {
+        setTimeout(()=>renderLockQ(),1200);
+      }
+    },1200);
+  }
+}
+
+function lockComplete(){
+  const data=LOCK_DATA[lockWIdx];
+  playTone('clear');
+  // Smash gate icon
+  const slot2=document.getElementById('lock-s2');
+  if(slot2) slot2.classList.add('lock-gate-open');
+  setTimeout(()=>{
+    document.getElementById('lock-ov').classList.remove('show');
+    const isLast=lockWIdx===WORLDS.length-1;
+    if(isLast){
+      showWin();
+    } else {
+      fadeTransition(()=>{
+        wIdx++;qIdx=0;coinsEarned=0;
+        activeSession=buildSession(wIdx);
+        applyTheme(wIdx);buildTrack();renderQ();window.scrollTo(0,0);
+      });
+    }
+  },900);
+}
 function showClear(){
   stopQTimer();
   playTone('clear');
-  // Lift the dragon gate
   const door=document.getElementById('track-door');
   if(door) door.classList.add('open');
   const isLast=wIdx===WORLDS.length-1;
-  document.getElementById('cl-icon').textContent=isLast?'🏆':'🚪';
-  document.getElementById('cl-title').textContent=isLast?'SHADOW DRAGON DEFEATED!':'LAIR UNLOCKED!';
+  document.getElementById('cl-icon').textContent=isLast?'🏆':'🔐';
+  document.getElementById('cl-title').textContent=isLast?'SHADOW DRAGON DEFEATED!':'ALL GEMS COLLECTED!';
   document.getElementById('cl-sub').textContent=isLast
     ?'You recovered all the Spanish scrolls!'
-    :`On to Lair ${WORLDS[wIdx+1].num} — ${WORLDS[wIdx+1].name}`;
-  document.getElementById('next-btn').textContent=isLast?'FINISH! 🏆':'NEXT WORLD ▶';
+    :'Now break the seal to unlock the next lair!';
+  document.getElementById('next-btn').textContent=isLast?'FINISH! 🏆':'🔐 BREAK THE SEAL!';
   document.getElementById('clear-ov').classList.add('show');
 }
 
 document.getElementById('next-btn').onclick=()=>{
   document.getElementById('clear-ov').classList.remove('show');
-  if(wIdx===WORLDS.length-1){showWin();}
-  else{
-    fadeTransition(()=>{
-      wIdx++;qIdx=0;coinsEarned=0;
-      activeSession=buildSession(wIdx);
-      applyTheme(wIdx);buildTrack();renderQ();window.scrollTo(0,0);
-    });
+  if(wIdx===WORLDS.length-1){
+    showWin();
+  } else {
+    showLock(wIdx);
   }
 };
 
