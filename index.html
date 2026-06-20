@@ -317,6 +317,7 @@ h1.game-title{
   transition:transform .08s;
 }
 .hc-btn-no:hover{transform:scale(1.05);background:rgba(255,255,255,0.25);}
+.hud-diff-badge{
   font-size:.36rem;letter-spacing:1px;
   padding:.15rem .45rem;
   border:2px solid currentColor;
@@ -821,8 +822,57 @@ h1.game-title{
 @keyframes driftNear{from{transform:translateX(0);}to{transform:translateX(-48px);}}
 
 /* ══════════════════════════════════════
-   COMBINATION LOCK BONUS CHALLENGE
+   MINI-GAMES SHARED
 ══════════════════════════════════════ */
+.mg-title{font-family:'Cinzel',serif;font-size:clamp(1.2rem,4vw,1.8rem);color:#f8d800;letter-spacing:2px;margin-bottom:.3rem;text-shadow:0 0 16px rgba(248,216,0,.4);}
+.mg-sub{font-family:'Press Start 2P',monospace;font-size:.48rem;color:#aaa;letter-spacing:2px;line-height:2;margin-bottom:.6rem;}
+.mg-feedback{font-family:'Fredoka One',cursive;font-size:1.2rem;min-height:1.6em;margin-top:.5rem;}
+.mg-feedback.good{color:#00ff88;} .mg-feedback.bad{color:#ff6666;}
+.mg-btn{font-family:'Fredoka One',cursive;font-size:1.1rem;padding:.6rem 1.8rem;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.3);color:#fff;cursor:pointer;letter-spacing:1px;transition:background .1s,transform .08s;margin-top:.4rem;}
+.mg-btn:hover{background:rgba(255,255,255,0.22);transform:scale(1.04);}
+
+/* ── OPTION 3: SILHOUETTE MATCH ── */
+.sil-wrap{display:flex;flex-direction:column;align-items:center;gap:.8rem;width:100%;}
+.sil-img{width:180px;height:140px;background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:6rem;filter:brightness(0) invert(1) opacity(.18);border-radius:8px;}
+.sil-img.reveal{filter:none;}
+.sil-choices{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;width:100%;max-width:440px;}
+.sil-btn{font-family:'Nunito',sans-serif;font-weight:900;font-size:1.1rem;padding:.75rem .5rem;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;transition:background .1s,border-color .1s,transform .08s;min-height:52px;}
+.sil-btn:hover:not(:disabled){background:rgba(248,216,0,0.2);border-color:#f8d800;transform:translateY(-2px);}
+.sil-btn.sil-correct{background:rgba(0,180,0,0.5)!important;border-color:#00ff88!important;}
+.sil-btn.sil-wrong{background:rgba(180,0,0,0.5)!important;border-color:#ff4466!important;animation:btnShake .3s ease;}
+.sil-btn:disabled{cursor:default;}
+
+/* ── OPTION 5: MEMORY PAIRS ── */
+.mem-grid{display:grid;gap:.5rem;margin:0 auto;}
+.mem-grid.g3x2{grid-template-columns:repeat(3,1fr);max-width:380px;}
+.mem-grid.g4x2{grid-template-columns:repeat(4,1fr);max-width:460px;}
+.mem-card{width:90px;height:70px;perspective:600px;cursor:pointer;}
+.mem-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .4s;}
+.mem-card.flipped .mem-card-inner{transform:rotateY(180deg);}
+.mem-card.matched .mem-card-inner{transform:rotateY(180deg);}
+.mem-card-front,.mem-card-back{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:900;}
+.mem-card-front{background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);font-size:1.8rem;}
+.mem-card-back{background:rgba(30,20,60,0.9);border:2px solid rgba(150,100,255,0.4);transform:rotateY(180deg);font-family:'Nunito',sans-serif;font-size:.82rem;color:#fff;text-align:center;padding:.2rem;line-height:1.2;}
+.mem-card.matched .mem-card-front{background:rgba(0,180,0,0.3);border-color:#00ff88;}
+.mem-card.matched .mem-card-back{background:rgba(0,180,0,0.5);border-color:#00ff88;}
+.mem-score{font-family:'Press Start 2P',monospace;font-size:.5rem;color:#aaa;letter-spacing:2px;}
+
+/* ── OPTION 2: SPELL THE WORD ── */
+.spell-hint{font-family:'Nunito',sans-serif;font-size:1rem;color:#ccc;margin-bottom:.4rem;}
+.spell-slots{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin:.4rem 0;}
+.spell-slot{width:42px;height:48px;border-bottom:3px solid #f8d800;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;color:#f8d800;background:transparent;min-width:28px;}
+.spell-letters{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;margin:.4rem 0;}
+.spell-letter{width:40px;height:44px;background:rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.25);font-family:'Cinzel',serif;font-size:1.2rem;font-weight:900;color:#fff;cursor:pointer;transition:background .1s,transform .08s;display:flex;align-items:center;justify-content:center;}
+.spell-letter:hover:not(.used){background:rgba(248,216,0,0.25);border-color:#f8d800;transform:translateY(-3px);}
+.spell-letter.used{opacity:.2;pointer-events:none;}
+.spell-actions{display:flex;gap:.6rem;justify-content:center;margin-top:.4rem;}
+
+/* ── OPTION 1: DRAGON FLIGHT ── */
+#flight-canvas{border:2px solid rgba(255,255,255,0.15);border-radius:6px;display:block;cursor:pointer;touch-action:none;}
+.flight-lives{font-family:'Press Start 2P',monospace;font-size:.5rem;color:#f8d800;letter-spacing:2px;}
+.flight-tip{font-family:'Nunito',sans-serif;font-size:.85rem;color:#aaa;}
+
+/* ── OPTION 4: LOCK (already exists, keep) ── */
 #lock-ov{
   position:fixed;inset:0;z-index:502;
   background:rgba(0,0,0,0.92);
@@ -1085,7 +1135,7 @@ h1.game-title{
   <!-- Decorative lines -->
   <line x1="140" y1="128" x2="460" y2="128" stroke="url(#lg)" stroke-width="1.5" opacity=".6"/>
   <text x="300" y="150" font-family="Cinzel,serif" font-size="12"
-        fill="#ffcc88" text-anchor="middle" letter-spacing="7" opacity=".8">ESCAPE ROOM · VIVA 1</text>
+        fill="#ffcc88" text-anchor="middle" letter-spacing="7" opacity=".8">VIVA 1 · MODULE 1</text>
 
   <!-- RIGHT DRAGON (mirrored, facing left) -->
   <g transform="translate(592,10) scale(-1,1)" filter="url(#sf)">
@@ -1144,7 +1194,7 @@ h1.game-title{
       <span class="item-check">✅</span>
       <span class="item-icon">🔥</span>
       <span class="item-name">HARD</span>
-      <div class="item-details">All question types<br>5 choices · Spanish prompts<br>⏱ 20 sec per question</div>
+      <div class="item-details">All question types<br>5 choices · Spanish prompts<br>⏱ 30 sec per question</div>
     </div>
   </div>
 
@@ -1235,6 +1285,11 @@ h1.game-title{
     <div class="lock-choices" id="lock-choices"></div>
     <div class="lock-feedback" id="lock-feedback"></div>
   </div>
+</div>
+
+<!-- MINI-GAME OVERLAY (shared container for all 5 mini-games) -->
+<div id="mini-ov" style="position:fixed;inset:0;z-index:503;background:rgba(0,0,0,0.93);display:none;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;text-align:center;padding:1.2rem;">
+  <div id="mini-inner" style="width:100%;max-width:620px;"></div>
 </div>
 
 <!-- HOME CONFIRM OVERLAY -->
@@ -1329,7 +1384,7 @@ function handlePreviewClick(e,worldIdx){
   if(!e.shiftKey) return;
   cancelPending(); stopQTimer();
   wIdx=worldIdx; qIdx=0; coinsEarned=0; totalWrong=0;
-  activeSession=buildSession(worldIdx);
+  startLair(worldIdx);
   applyTheme(worldIdx); buildTrack(); startGlobal();
   showScreen('room-screen'); renderQ();
 }
@@ -1578,7 +1633,7 @@ const DIFF_CFG={
   mid: {label:'⭐ NORMAL',cls:'mid',  choiceBonus:1, spareBonus:1,
         timer:{0:45, 120:45, 90:45}}, // 45s on all worlds
   hard:{label:'🔥 HARD',  cls:'hard', choiceBonus:2, spareBonus:2,
-        timer:{0:20, 120:20, 90:20}}, // 20s per question — tight
+        timer:{0:30, 120:30, 90:30}}, // 30s per question
 };
 
 // Per-world base difficulty — gets harder each room
@@ -1685,10 +1740,10 @@ const WORLDS=[
        choices:['Goodbye!','Hello!','See you later!','Fine, thanks.','Not bad.']},
       {diff:'easy',type:'vocab',prompt:'What does "Bien, gracias" mean?',answer:'Fine, thanks.',
        choices:['Fine, thanks.','Not bad.','Awful.','Great.','Goodbye!']},
-      {diff:'easy',type:'vocab',prompt:'What does "Fenomenal" mean?',answer:'Great.',
-       choices:['Great.','Fine, thanks.','Not bad.','Awful.','Hello!']},
+      {diff:'easy',type:'vocab',prompt:'What does "Fenomenal" mean?',answer:'Great!',
+       choices:['Great!','Fine, thanks.','Not bad.','Awful.','Hello!']},
       {diff:'easy',type:'vocab',prompt:'What does "Fatal" mean?',answer:'Awful.',
-       choices:['Awful.','Not bad.','Fine, thanks.','Great.','See you later!']},
+       choices:['Awful.','Not bad.','Fine, thanks.','Great!','See you later!']},
       {diff:'easy',type:'comp',context:'"Me llamo Luca. Vivo en Sydney. ¡Hasta luego!"',
        question:'What city does Luca live in?',answer:'Sydney',
        choices:['Sydney','Madrid','Perth','Brisbane','Melbourne']},
@@ -1697,32 +1752,46 @@ const WORLDS=[
       {diff:'easy',type:'builder',prompt:'Build: "I am called Ana."',answer:'Me llamo Ana.',
        words:['Me','llamo','Ana.'],extraSpares:['Vivo','en','¡Hola!','¡Adiós!']},
       // ── NORMAL ──────────────────────────────────────────────
-      {diff:'normal',type:'vocab',prompt:'What does "¡Hasta luego!" mean?',answer:'See you later!',
-       choices:['See you later!','Goodbye!','Hello!','How are you?','I am called…']},
-      {diff:'normal',type:'vocab',prompt:'What does "Regular" mean?',answer:'Not bad.',
-       choices:['Not bad.','Fine, thanks.','Awful.','Great.','Hello!']},
-      {diff:'normal',type:'vocab',prompt:'What does "¿Dónde vives?" mean?',answer:'Where do you live?',
-       choices:['Where do you live?','What are you called?','How are you?','How old are you?','What is your name?']},
-      {diff:'normal',type:'grammar',prompt:'Complete: "__ llamo Carlos."',answer:'Me',
-       choices:['Me','Te','Se','Le','Nos']},
-      {diff:'normal',type:'grammar',prompt:'Complete: "¿Cómo __ llamas?"',answer:'te',
-       choices:['te','me','se','le','nos']},
-      {diff:'normal',type:'comp',context:'Marta says: "¡Hola! Me llamo Marta. Vivo en Madrid. ¿Y tú?"',
-       question:'Where does Marta live?',answer:'Madrid',
-       choices:['Madrid','Barcelona','Valencia','Sevilla','Málaga']},
-      {diff:'normal',type:'comp',context:'"¡Hola! ¿Qué tal? — Bien, gracias. ¿Y tú? — Regular."',
-       question:'How does the second person feel?',answer:'Not bad / OK',
-       choices:['Not bad / OK','Great','Awful','Fine','Terrible']},
+      {diff:'normal',type:'vocab',prompt:'Read: "— ¿Qué tal? — Regular." How is this person feeling?',answer:'So-so / not great',
+       choices:['So-so / not great','Very well','Very bad','Brilliant','Unknown']},
+      {diff:'normal',type:'vocab',prompt:'Which question asks for someone\'s NAME?',answer:'¿Cómo te llamas?',
+       choices:['¿Cómo te llamas?','¿Dónde vives?','¿Qué tal?','¿Cuántos años tienes?','¿De dónde eres?']},
+      {diff:'normal',type:'vocab',prompt:'Which question asks WHERE someone lives?',answer:'¿Dónde vives?',
+       choices:['¿Dónde vives?','¿Cómo te llamas?','¿Qué tal?','¿Cuántos años tienes?','¿De dónde eres?']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "___ llamo Carlos. ¿Y tú?"',answer:'Me',
+       choices:['Me','Te','Se','Nos','Le']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "¿Cómo ___ llamas tú?"',answer:'te',
+       choices:['te','me','se','nos','os']},
+      {diff:'normal',type:'comp',context:'"¡Hola! Me llamo Marta. Vivo en Madrid. ¿Y tú? ¿Cómo te llamas?"',
+       question:'What information does Marta NOT give about herself?',answer:'Her age',
+       choices:['Her age','Her name','Where she lives','That she says hello','That she asks a question']},
+      {diff:'normal',type:'comp',context:'"¡Hola! ¿Qué tal? — Bien, gracias. ¿Y tú? — Fatal."',
+       question:'Which person is feeling worse?',answer:'The second person — they say "Fatal"',
+       choices:['The second person — they say "Fatal"','The first — they say "Bien"','Both feel the same','Cannot tell','Both feel fine']},
       // ── HARD ────────────────────────────────────────────────
-      {diff:'hard',type:'grammar',prompt:'¿Cuál es la traducción correcta de "Vivo en…"?',answer:'I live in…',
-       choices:['I live in…','I am called…','I am from…','I stay in…','I am in…']},
-      {diff:'hard',type:'grammar',prompt:'Completa: "Me llamo Ana __ vivo en Perth."',answer:'y',
-       choices:['y','pero','también','porque','o']},
-      {diff:'hard',type:'builder',prompt:'Build: "Where do you live?" in Spanish',answer:'¿Dónde vives?',
-       words:['¿Dónde','vives?'],extraSpares:['¿Cómo','llamas?','Vivo','en','¡Hola!','¿Qué','tal?']},
-      {diff:'hard',type:'comp',context:'"Me llamo Sara. Vivo en Brisbane. ¿Qué tal? — Fatal, gracias. No vivo en Madrid."',
-       question:'¿Cómo se llama la chica? (What is the girl called?)',answer:'Sara',
-       choices:['Sara','Madrid','Brisbane','Ana','Marta']},
+      {diff:'hard',type:'grammar',prompt:'Choose the correct verb: "___ en Sydney, no en Perth."',answer:'Vivo',
+       choices:['Vivo','Llamo','Soy','Tengo','Estoy']},
+      {diff:'hard',type:'grammar',prompt:'Choose the correct linking word: "Me llamo Ana ___ vivo en Sevilla."',answer:'y',
+       choices:['y','pero','porque','también','o']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "Hello! Where do you live? I live in Valencia."',answer:'¡Hola! ¿Dónde vives? Vivo en Valencia.',
+       words:['¡Hola!','¿Dónde','vives?','Vivo','en','Valencia.'],extraSpares:['¿Cómo','te','llamas?','¡Adiós!','Me','llamo']},
+      {diff:'hard',type:'comp',context:'"Me llamo Sara. Vivo en Brisbane, pero mi amiga vive en Madrid. ¿Qué tal? — Fatal, gracias."',
+       question:'Where does Sara\'s FRIEND live?',answer:'Madrid',
+       choices:['Madrid','Brisbane','Valencia','Perth','Sevilla']},
+      // ── EXTRA: missing 1.1 vocab ────────────────────────────
+      {diff:'easy',type:'vocab',prompt:'What does "fenomenal" mean?',answer:'Great / fantastic',
+       choices:['Great / fantastic','Not bad','Fine, thanks','Awful','See you later']},
+      {diff:'easy',type:'vocab',prompt:'What does "regular" mean?',answer:'Not bad / so-so',
+       choices:['Not bad / so-so','Fine, thanks','Great','Awful','Hello']},
+      {diff:'easy',type:'vocab',prompt:'What does "¡Hasta luego!" mean?',answer:'See you later!',
+       choices:['See you later!','Goodbye!','Hello!','How are you?','Fine, thanks.']},
+      {diff:'normal',type:'vocab',prompt:'Put these greetings in order from BEST to WORST feeling: fenomenal / regular / fatal',answer:'fenomenal → regular → fatal',
+       choices:['fenomenal → regular → fatal','fatal → regular → fenomenal','regular → fenomenal → fatal','fenomenal → fatal → regular','fatal → fenomenal → regular']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Me llamo Javier. ___ en Valencia."',answer:'Vivo',
+       choices:['Vivo','Llamo','Soy','Tengo','Estoy']},
+      {diff:'hard',type:'comp',context:'"¡Hola! Me llamo Andrés. Vivo en Bogotá. ¿Qué tal? — Fenomenal, gracias. ¡Hasta luego!"',
+       question:'How is Andrés feeling, and what does he say at the end?',answer:'Fenomenal — and he says goodbye (¡Hasta luego!)',
+       choices:['Fenomenal — and he says goodbye (¡Hasta luego!)','Regular — and he says hello','Fatal — and he lives in Madrid','Bien — and he says ¡Adiós!','Fenomenal — and he asks a question']},
     ]
   },
 
@@ -1796,45 +1865,66 @@ const WORLDS=[
        choices:['I am shy','I am funny','I am serious','I am nice','I am clever']},
       {diff:'easy',type:'vocab',prompt:'What does "soy divertido/a" mean?',answer:'I am funny',
        choices:['I am funny','I am shy','I am serious','I am generous','I am silly']},
-      {diff:'easy',type:'vocab',prompt:'"Muy" means…',answer:'very',
+      {diff:'easy',type:'vocab',prompt:'What does "muy" mean?',answer:'very',
        choices:['very','quite','a bit','but','also']},
-      {diff:'easy',type:'vocab',prompt:'"Bastante" means…',answer:'quite',
+      {diff:'easy',type:'vocab',prompt:'What does "bastante" mean?',answer:'quite',
        choices:['quite','very','a bit','but','also']},
-      {diff:'easy',type:'vocab',prompt:'"Un poco" means…',answer:'a bit',
+      {diff:'easy',type:'vocab',prompt:'What does "un poco" mean?',answer:'a bit',
        choices:['a bit','very','quite','but','also']},
-      {diff:'easy',type:'builder',prompt:'Build: "I am very funny."',answer:'Soy muy divertido.',
-       words:['Soy','muy','divertido.'],extraSpares:['bastante','tímido.','pero','también']},
-      {diff:'easy',type:'comp',context:'"Me llamo Leo. Soy muy listo. También soy generoso."',
-       question:'What is one word that describes Leo?',answer:'listo (clever)',
-       choices:['listo (clever)','tímido (shy)','tonto (silly)','serio (serious)','tranquilo (calm)']},
+      {diff:'easy',type:'builder',prompt:'Build: "I am very funny but a little shy."',answer:'Soy muy divertido pero un poco tímido.',
+       words:['Soy','muy','divertido','pero','un poco','tímido.'],extraSpares:['bastante','serio.','también','tranquilo.']},
+      {diff:'easy',type:'comp',context:'"Me llamo Leo. Soy muy listo y bastante generoso. No soy serio ni tímido."',
+       question:'What does Leo say he is NOT?',answer:'Serio ni tímido',
+       choices:['Serio ni tímido','Listo ni generoso','Tranquilo ni simpático','Divertido ni tonto','Listo ni serio']},
       // ── NORMAL ──────────────────────────────────────────────
-      {diff:'normal',type:'vocab',prompt:'What does "soy generoso/a" mean?',answer:'I am generous',
-       choices:['I am generous','I am clever','I am shy','I am calm','I am serious']},
-      {diff:'normal',type:'vocab',prompt:'"También" means…',answer:'also / too',
-       choices:['also / too','but','very','quite','a bit']},
-      {diff:'normal',type:'vocab',prompt:'"Pero" means…',answer:'but',
-       choices:['but','also / too','very','quite','a bit']},
-      {diff:'normal',type:'grammar',prompt:'Choose the correct form: "Ella __ simpática."',answer:'es',
+      {diff:'normal',type:'vocab',prompt:'Read: "Soy bastante generoso." What does "bastante" tell us here?',answer:'Medium-high level — more than "un poco" but less than "muy"',
+       choices:['Medium-high level — more than "un poco" but less than "muy"','Exactly the same as "muy"','The opposite','A synonym for "pero"','Means "also"']},
+      {diff:'normal',type:'vocab',prompt:'Which sentence uses "también" correctly?',answer:'Soy simpático y también soy generoso.',
+       choices:['Soy simpático y también soy generoso.','Soy simpático también no soy generoso.','También soy, pero tímido.','Soy muy también divertido.','También pero soy tranquilo.']},
+      {diff:'normal',type:'vocab',prompt:'Which sentence uses "pero" correctly to show contrast?',answer:'Soy divertido pero un poco serio.',
+       choices:['Soy divertido pero un poco serio.','Soy divertido pero muy divertido.','Pero soy soy divertido.','Soy pero divertido serio.','Muy pero soy tranquilo.']},
+      {diff:'normal',type:'grammar',prompt:'Choose the correct verb form: "Ella ___ muy simpática."',answer:'es',
        choices:['es','soy','eres','son','está']},
-      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Soy divertido, __ no soy tonto."',answer:'pero',
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Soy divertido, ___ no soy tonto."',answer:'pero',
        choices:['pero','también','muy','bastante','un poco']},
-      {diff:'normal',type:'builder',prompt:'Build: "I am also generous."',answer:'También soy generoso.',
-       words:['También','soy','generoso.'],extraSpares:['pero','tímido.','un poco','muy']},
+      {diff:'normal',type:'builder',prompt:'Build: "I am also quite generous and very friendly."',answer:'También soy bastante generoso y muy simpático.',
+       words:['También','soy','bastante','generoso','y','muy','simpático.'],extraSpares:['pero','tímido.','un poco','serio.']},
       {diff:'normal',type:'comp',context:'"Me llamo Leo. Soy muy listo pero un poco serio. No soy tonto. También soy generoso."',
-       question:'What does Leo say he is NOT?',answer:'tonto (silly)',
-       choices:['tonto (silly)','tímido (shy)','serio (serious)','generoso (generous)','listo (clever)']},
+       question:'Which part of Leo\'s description is slightly negative?',answer:'He is a little serious',
+       choices:['He is a little serious','He is very clever','He is generous','He is not silly','He is friendly']},
       // ── HARD ────────────────────────────────────────────────
-      {diff:'hard',type:'grammar',prompt:'Completa en español: "Soy simpático y __ soy generoso."',answer:'también',
-       choices:['también','pero','muy','bastante','un poco']},
-      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta: "¿Qué tipo de persona __?" (you are)',answer:'eres',
+      {diff:'hard',type:'grammar',prompt:'Choose the correct linking word: "Soy simpático ___ no soy generoso."',answer:'pero',
+       choices:['pero','también','muy','bastante','un poco']},
+      {diff:'hard',type:'grammar',prompt:'Choose the correct form: "¿Qué tipo de persona ___?" — asking YOU',answer:'eres',
        choices:['eres','es','soy','son','estás']},
-      {diff:'hard',type:'builder',prompt:'Escribe en español: "I am quite calm but a bit serious."',answer:'Soy bastante tranquilo pero un poco serio.',
-       words:['Soy','bastante','tranquilo','pero','un poco','serio.'],extraSpares:['muy','tímido.','también','divertido.','eres','simpático.']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "I am quite calm but I am also a little serious."',answer:'Soy bastante tranquilo pero también soy un poco serio.',
+       words:['Soy','bastante','tranquilo','pero','también','soy','un poco','serio.'],extraSpares:['muy','tímido.','divertido.','eres','simpático.']},
       {diff:'hard',type:'comp',context:'"Soy bastante tranquila y muy simpática. Un poco seria también. No soy tonta ni tímida."',
-       question:'Según el texto — ¿cómo es esta persona? (Select what is TRUE)',answer:'tranquila y simpática',
-       choices:['tranquila y simpática','tonta y seria','tímida y tranquila','divertida y generosa','seria y tímida']},
-      {diff:'hard',type:'grammar',prompt:'Elige la traducción correcta: "I am not shy."',answer:'No soy tímido.',
-       choices:['No soy tímido.','Soy no tímido.','No estoy tímido.','Soy tímido no.','No soy tímida.']},
+       question:'Which statement is FALSE according to the text?',answer:'This person is shy',
+       choices:['This person is shy','This person is calm','This person is friendly','This person is a little serious','This person is not silly']},
+      {diff:'hard',type:'grammar',prompt:'Choose the correct Spanish for "I am not shy."',answer:'No soy tímido.',
+       choices:['No soy tímido.','Soy no tímido.','No estoy tímido.','Soy tímido no.','No eres tímido.']},
+      // ── EXTRA: 1.2 vocab — passion, hero, sincero, genial, guay ──
+      {diff:'easy',type:'vocab',prompt:'What does "Mi pasión es el fútbol" mean?',answer:'My passion is football',
+       choices:['My passion is football','My hero is football','I play football','I like football','Football is cool']},
+      {diff:'easy',type:'vocab',prompt:'What does "Mi héroe es…" mean?',answer:'My hero is…',
+       choices:['My hero is…','My passion is…','My friend is…','My name is…','My pet is…']},
+      {diff:'easy',type:'vocab',prompt:'What does "sincero/a" mean?',answer:'sincere / honest',
+       choices:['sincere / honest','funny','shy','clever','calm']},
+      {diff:'normal',type:'vocab',prompt:'What does "¡Es genial!" mean?',answer:'He/She is great!',
+       choices:['He/She is great!','He/She is funny!','He/She is shy!','He/She is awful!','He/She is clever!']},
+      {diff:'normal',type:'vocab',prompt:'What does "¡Es estupendo!" mean?',answer:'He/She is brilliant / fantastic!',
+       choices:['He/She is brilliant / fantastic!','He/She is great!','He/She is cool!','He/She is awful!','He/She is not bad!']},
+      {diff:'normal',type:'vocab',prompt:'What does "guay" mean?',answer:'cool',
+       choices:['cool','great','brilliant','shy','serious']},
+      {diff:'normal',type:'comp',context:'"Me llamo Ana. Soy seria y también sincera. Mi pasión es la música. Mi héroe es Shakira. ¡Es genial!"',
+       question:'What is Ana\'s passion, and who is her hero?',answer:'Music — and her hero is Shakira',
+       choices:['Music — and her hero is Shakira','Sport — and her hero is Messi','Tennis — and her hero is Nadal','Football — and her hero is Shakira','Music — and she has no hero']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "My passion is sport and my hero is Rafael Nadal."',answer:'Mi pasión es el deporte y mi héroe es Rafael Nadal.',
+       words:['Mi','pasión','es','el','deporte','y','mi','héroe','es','Rafael Nadal.'],extraSpares:['fútbol','la música','soy','tenis']},
+      {diff:'hard',type:'comp',context:'"Soy tranquilo y también generoso. Mi pasión es el tenis. Mi héroe es Rafael Nadal. ¡Es guay!"',
+       question:'Which word describes how this person feels about their hero?',answer:'guay (cool)',
+       choices:['guay (cool)','genial (great)','estupendo (brilliant)','fenomenal (fantastic)','tonto (silly)']},
     ]
   },
 
@@ -1901,47 +1991,78 @@ const WORLDS=[
 </svg>`,
     pool:[
       // ── EASY ────────────────────────────────────────────────
-      {diff:'easy',type:'vocab',prompt:'What does "Tengo una hermana" mean?',answer:'I have a sister',
-       choices:['I have a sister','I have a brother','I have a pet','I am an only child','I have a stepsister']},
-      {diff:'easy',type:'vocab',prompt:'What does "Tengo un hermano" mean?',answer:'I have a brother',
-       choices:['I have a brother','I have a sister','I have a half-brother','I am an only child','I have no siblings']},
-      {diff:'easy',type:'vocab',prompt:'What is "cinco" in English?',answer:'five',
-       choices:['five','four','six','three','seven']},
-      {diff:'easy',type:'vocab',prompt:'What is "diez" in English?',answer:'ten',
-       choices:['ten','six','three','eight','five']},
+      {diff:'easy',type:'vocab',prompt:'What does "tengo una hermana" mean?',answer:'I have a sister',
+       choices:['I have a sister','I have a brother','I have a pet','I am an only child','I have no siblings']},
+      {diff:'easy',type:'vocab',prompt:'What does "tengo un hermano" mean?',answer:'I have a brother',
+       choices:['I have a brother','I have a sister','I am an only child','I have no siblings','I have two brothers']},
+      {diff:'easy',type:'vocab',prompt:'What number is "cinco"?',answer:'5',
+       choices:['5','4','6','3','7']},
+      {diff:'easy',type:'vocab',prompt:'What number is "diez"?',answer:'10',
+       choices:['10','6','3','8','5']},
       {diff:'easy',type:'builder',prompt:'Build: "I have a sister."',answer:'Tengo una hermana.',
        words:['Tengo','una','hermana.'],extraSpares:['un','hermano.','dos','tres']},
       {diff:'easy',type:'comp',context:'"Me llamo Sofía. Tengo once años. Tengo un hermano y una hermana."',
-       question:'How old is Sofía?',answer:'11',
-       choices:['11','10','12','13','9']},
+       question:'How many siblings does Sofía have in total?',answer:'2 — one brother and one sister',
+       choices:['2 — one brother and one sister','1 — only a brother','3 — two brothers and a sister','0 — she is an only child','1 — only a sister']},
       // ── NORMAL ──────────────────────────────────────────────
-      {diff:'normal',type:'vocab',prompt:'What does "Soy hijo único" mean?',answer:'I am an only child (male)',
-       choices:['I am an only child (male)','I am an only child (female)','I have no pets','I have a brother','I am very serious']},
-      {diff:'normal',type:'vocab',prompt:'What is "doce" in English?',answer:'twelve',
-       choices:['twelve','eleven','thirteen','ten','fourteen']},
-      {diff:'normal',type:'vocab',prompt:'What does "Tengo… años" mean?',answer:'I am… years old.',
-       choices:['I am… years old.','I have… brothers.','I live in…','I am called…','I have… pets.']},
-      {diff:'normal',type:'grammar',prompt:'Fill the gap: "__ años tienes?"',answer:'¿Cuántos',
+      {diff:'normal',type:'vocab',prompt:'Which phrase describes someone with NO brothers or sisters?',answer:'Soy hijo único.',
+       choices:['Soy hijo único.','Tengo una hermana.','Tengo dos hermanos.','Tengo un hermano mayor.','Tengo tres hermanas.']},
+      {diff:'normal',type:'vocab',prompt:'Read the number: "doce". What number comes next?',answer:'trece',
+       choices:['trece','once','catorce','diez','quince']},
+      {diff:'normal',type:'vocab',prompt:'Which phrase means you are 13 years old?',answer:'Tengo trece años.',
+       choices:['Tengo trece años.','Tengo doce años.','Tengo tres hermanos.','Vivo en trece.','Soy trece.']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap to complete the question: "___ años tienes?"',answer:'¿Cuántos',
        choices:['¿Cuántos','¿Cómo','¿Dónde','¿Qué','¿Cuándo']},
-      {diff:'normal',type:'grammar',prompt:'Choose the right article: "Tengo __ hermano."',answer:'un',
+      {diff:'normal',type:'grammar',prompt:'Which article is correct? "Tengo ___ hermano."',answer:'un',
        choices:['un','una','el','la','unos']},
-      {diff:'normal',type:'builder',prompt:'Build: "I have two brothers."',answer:'Tengo dos hermanos.',
-       words:['Tengo','dos','hermanos.'],extraSpares:['una','hermana.','tres','cuatro']},
+      {diff:'normal',type:'builder',prompt:'Build: "I have two brothers and a sister."',answer:'Tengo dos hermanos y una hermana.',
+       words:['Tengo','dos','hermanos','y','una','hermana.'],extraSpares:['tres','hermano.','un','cuatro']},
       {diff:'normal',type:'comp',context:'"Hola, me llamo Marco. Tengo doce años. Soy hijo único y vivo en Perth."',
-       question:'Does Marco have any brothers or sisters?',answer:'No, he is an only child',
-       choices:['No, he is an only child','Yes, one sister','Yes, two brothers','The text does not say','Yes, one brother']},
+       question:'What can we work out about Marco\'s family?',answer:'He has no brothers or sisters',
+       choices:['He has no brothers or sisters','He has a sister in Perth','He has twelve brothers','He lives with his grandparents','He has an older brother']},
       // ── HARD ────────────────────────────────────────────────
-      {diff:'hard',type:'grammar',prompt:'Elige el verbo correcto: "Yo __ tres hermanos."',answer:'tengo',
+      {diff:'hard',type:'grammar',prompt:'Why do we say "Tengo una hermana" and not "Tengo un hermana"?',answer:'"hermana" is feminine so needs the feminine article "una"',
+       choices:['"hermana" is feminine so needs the feminine article "una"','"un" is only used with numbers','"hermana" starts with a vowel','"una" means "one" and "un" means "a"','No difference — both are correct']},
+      {diff:'hard',type:'grammar',prompt:'Fill the gap: "No ___ hermanos — soy hijo único."',answer:'tengo',
        choices:['tengo','tienes','tiene','tenemos','tienen']},
-      {diff:'hard',type:'grammar',prompt:'Completa: "No __ hermanos." — ¿cuál es correcto?',answer:'tengo',
-       choices:['tengo','tienes','tiene','tenemos','tienen']},
-      {diff:'hard',type:'grammar',prompt:'Elige el artículo correcto: "Tengo __ hermana." (a sister)',answer:'una',
+      {diff:'hard',type:'grammar',prompt:'Choose the correct article: "Tengo ___ hermana." (a sister)',answer:'una',
        choices:['una','un','la','el','unas']},
-      {diff:'hard',type:'builder',prompt:'Escribe en español: "I am an only child." (male)',answer:'Soy hijo único.',
-       words:['Soy','hijo','único.'],extraSpares:['hija','No','tengo','hermanos.','una','hermana.']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "I have three brothers but I am an only child — joke!"',answer:'Tengo tres hermanos pero soy hijo único — ¡mentira!',
+       words:['Tengo','tres','hermanos','pero','soy','hijo','único','—','¡mentira!'],extraSpares:['dos','hermanas','una','también','hija']},
       {diff:'hard',type:'comp',context:'"Tengo dos hermanas y un hermano. No tengo mascotas. Tengo trece años. Soy hija única — ¡mentira!"',
-       question:'¿Cuántos hermanos tiene en total? (How many siblings in total?)',answer:'3',
-       choices:['3','2','1','4','5']},
+       question:'Why does she say "¡mentira!" at the end?',answer:'She just said she has siblings, so she cannot be an only child',
+       choices:['She just said she has siblings, so she cannot be an only child','She is actually fourteen, not thirteen','She does have pets','¡Mentira! means something different','She lives in another city']},
+      // ── EXTRA: 1.3 / 1.4 — birthday, months, numbers 16–31 ──
+      {diff:'easy',type:'vocab',prompt:'What does "¿Cuándo es tu cumpleaños?" mean?',answer:'When is your birthday?',
+       choices:['When is your birthday?','How old are you?','What is your name?','Where do you live?','Do you have siblings?']},
+      {diff:'easy',type:'vocab',prompt:'What does "Mi cumpleaños es el… de…" mean?',answer:'My birthday is the… of…',
+       choices:['My birthday is the… of…','My age is…','My name is…','My passion is…','My hero is…']},
+      {diff:'easy',type:'vocab',prompt:'Which month comes after "enero"?',answer:'febrero',
+       choices:['febrero','marzo','abril','diciembre','noviembre']},
+      {diff:'easy',type:'vocab',prompt:'Which month comes after "junio"?',answer:'julio',
+       choices:['julio','mayo','agosto','septiembre','junio']},
+      {diff:'easy',type:'vocab',prompt:'What number is "veinte"?',answer:'20',
+       choices:['20','12','15','21','30']},
+      {diff:'easy',type:'vocab',prompt:'What number is "treinta"?',answer:'30',
+       choices:['30','13','20','31','23']},
+      {diff:'normal',type:'vocab',prompt:'What does "Tengo catorce años" mean?',answer:'I am fourteen years old',
+       choices:['I am fourteen years old','I am forty years old','I have fourteen siblings','I live at number fourteen','I am thirteen years old']},
+      {diff:'normal',type:'vocab',prompt:'Which month is "agosto"?',answer:'August',
+       choices:['August','April','October','September','June']},
+      {diff:'normal',type:'vocab',prompt:'Which month is "diciembre"?',answer:'December',
+       choices:['December','September','November','October','January']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi cumpleaños es el ___ de mayo." (the 25th)',answer:'veinticinco',
+       choices:['veinticinco','quince','treinta','veinte','veintiuno']},
+      {diff:'normal',type:'comp',context:'"¡Hola! Me llamo Marta. Tengo doce años y mi cumpleaños es el veinticinco de diciembre — ¡el día de Navidad!"',
+       question:'Why is Marta\'s birthday special?',answer:'It is on Christmas Day (25th December)',
+       choices:['It is on Christmas Day (25th December)','It is in January','She is twelve years old','It is the 25th of November','She lives in Madrid']},
+      {diff:'hard',type:'grammar',prompt:'How do you say "My birthday is the 14th of February" in Spanish?',answer:'Mi cumpleaños es el catorce de febrero.',
+       choices:['Mi cumpleaños es el catorce de febrero.','Mi cumpleaños es el febrero de catorce.','Tengo el catorce de febrero.','Mi cumpleaños es catorce febrero.','Es el febrero catorce.']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "I am thirteen years old and my birthday is the 19th of September."',answer:'Tengo trece años y mi cumpleaños es el diecinueve de septiembre.',
+       words:['Tengo','trece','años','y','mi','cumpleaños','es','el','diecinueve','de','septiembre.'],extraSpares:['doce','octubre','febrero','catorce']},
+      {diff:'hard',type:'comp',context:'"¡Hola! Me llamo Javi. Tengo trece años y mi cumpleaños es el diecinueve de septiembre. Mi pasión es el deporte."',
+       question:'How old is Javi, and in which month is his birthday?',answer:'13 years old — birthday in September',
+       choices:['13 years old — birthday in September','12 years old — birthday in October','14 years old — birthday in September','13 years old — birthday in February','13 years old — birthday in December']},
     ]
   },
 
@@ -1992,52 +2113,77 @@ const WORLDS=[
 </svg>`,
     pool:[
       // ── EASY ────────────────────────────────────────────────
-      {diff:'easy',type:'vocab',prompt:'What does "Tengo un perro" mean?',answer:'I have a dog',
+      {diff:'easy',type:'vocab',prompt:'What does "tengo un perro" mean?',answer:'I have a dog',
        choices:['I have a dog','I have a cat','I have a rabbit','I have a snake','I have a guinea pig']},
-      {diff:'easy',type:'vocab',prompt:'What does "Tengo un gato" mean?',answer:'I have a cat',
-       choices:['I have a cat','I have a dog','I have a rabbit','I have a fish','I have a mouse']},
-      {diff:'easy',type:'vocab',prompt:'"Verde" means…',answer:'green',
+      {diff:'easy',type:'vocab',prompt:'What does "tengo un gato" mean?',answer:'I have a cat',
+       choices:['I have a cat','I have a dog','I have a rabbit','I have a fish','I have a guinea pig']},
+      {diff:'easy',type:'vocab',prompt:'What colour is "verde"?',answer:'green',
        choices:['green','blue','yellow','red','brown']},
-      {diff:'easy',type:'vocab',prompt:'"Rojo/a" means…',answer:'red',
+      {diff:'easy',type:'vocab',prompt:'What colour is "rojo/a"?',answer:'red',
        choices:['red','orange','pink','yellow','green']},
-      {diff:'easy',type:'vocab',prompt:'"Azul" means…',answer:'blue',
+      {diff:'easy',type:'vocab',prompt:'What colour is "azul"?',answer:'blue',
        choices:['blue','green','purple','grey','black']},
       {diff:'easy',type:'builder',prompt:'Build: "I have a pink cat."',answer:'Tengo un gato rosa.',
        words:['Tengo','un','gato','rosa.'],extraSpares:['rojo.','una','serpiente','verde.']},
       {diff:'easy',type:'comp',context:'"Tengo un perro. Se llama Rex. Es muy grande y negro."',
-       question:'What colour is Rex the dog?',answer:'black (negro)',
-       choices:['black (negro)','red (rojo)','white (blanco)','brown (marrón)','blue (azul)']},
+       question:'What colour is Rex?',answer:'black',
+       choices:['black','red','white','brown','blue']},
       // ── NORMAL ──────────────────────────────────────────────
-      {diff:'normal',type:'vocab',prompt:'What does "Tengo un conejo" mean?',answer:'I have a rabbit',
-       choices:['I have a rabbit','I have a fish','I have a cat','I have a snake','I have a mouse']},
-      {diff:'normal',type:'vocab',prompt:'"Amarillo/a" means…',answer:'yellow',
-       choices:['yellow','green','blue','orange','pink']},
-      {diff:'normal',type:'vocab',prompt:'"Negro/a" means…',answer:'black',
-       choices:['black','white','grey','brown','blue']},
-      {diff:'normal',type:'vocab',prompt:'"Marrón" means…',answer:'brown',
-       choices:['brown','orange','red','yellow','grey']},
-      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi perro __ muy grande."',answer:'es',
-       choices:['es','soy','eres','está','son']},
-      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi gato __ rosa y blanco."',answer:'es',
+      {diff:'normal',type:'vocab',prompt:'Which of these animals is normally smaller than a dog?',answer:'una cobaya',
+       choices:['una cobaya','un caballo','un perro grande','un oso','un lobo']},
+      {diff:'normal',type:'vocab',prompt:'Which description best matches the colour "amarillo"?',answer:'El color del sol',
+       choices:['El color del sol','El color del cielo','El color de la hierba','El color de la noche','El color de la tierra']},
+      {diff:'normal',type:'vocab',prompt:'Which sentence uses the colour correctly with the right gender?',answer:'Mi serpiente es negra.',
+       choices:['Mi serpiente es negra.','Mi serpiente es negro.','Mi serpiente es negros.','Mi serpiente es negras.','Mi serpiente son negra.']},
+      {diff:'normal',type:'grammar',prompt:'Fill the gap: "Mi perro ___ muy grande y negro."',answer:'es',
        choices:['es','soy','eres','son','está']},
+      {diff:'normal',type:'grammar',prompt:'Which sentence has the adjective in the correct position?',answer:'Tengo un gato negro.',
+       choices:['Tengo un gato negro.','Tengo un negro gato.','Tengo negro un gato.','Negro tengo un gato.','Un gato negro tengo.']},
+      {diff:'normal',type:'builder',prompt:'Build: "My guinea pig is brown and white. She is very calm."',answer:'Mi cobaya es marrón y blanca. Es muy tranquila.',
+       words:['Mi','cobaya','es','marrón','y','blanca.','Es','muy','tranquila.'],extraSpares:['negro.','roja','perro','un','bastante']},
       {diff:'normal',type:'comp',context:'"Me llamo Zoe. Tengo una cobaya marrón y blanca. Es muy tranquila y bastante tonta."',
-       question:'What two colours is the guinea pig?',answer:'brown and white',
-       choices:['brown and white','black and white','yellow and brown','pink and white','grey and white']},
+       question:'Which description of Zoe\'s guinea pig is NOT in the text?',answer:'Es muy inteligente',
+       choices:['Es muy inteligente','Es tranquila','Es marrón y blanca','Es bastante tonta','Pertenece a Zoe']},
       // ── HARD ────────────────────────────────────────────────
-      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta: "No tengo __ mascotas."',answer:'ninguna',
+      {diff:'hard',type:'grammar',prompt:'Choose the correct form: "No tengo ___ mascotas."',answer:'ninguna',
        choices:['ninguna','alguna','mucha','unos','las']},
-      {diff:'hard',type:'grammar',prompt:'Elige la forma correcta del adjetivo: "Mis peces son __."',answer:'rojos',
-       choices:['rojos','rojo','roja','rojas','rojito']},
-      {diff:'hard',type:'grammar',prompt:'Completa: "Mi serpiente es verde y __." (black — fem.)',answer:'negra',
+      {diff:'hard',type:'grammar',prompt:'Why do we say "Mis peces son rojos" and not "rojo"?',answer:'"peces" is plural and masculine so the adjective must agree',
+       choices:['"peces" is plural and masculine so the adjective must agree','"rojo" is wrong in Spanish','Fish are always red','The adjective goes before the noun','"rojos" is the nicest colour']},
+      {diff:'hard',type:'grammar',prompt:'Fill the gap: "Mi serpiente es verde y ___." (she is black)',answer:'negra',
        choices:['negra','negro','negros','negras','negrura']},
-      {diff:'hard',type:'builder',prompt:'Escribe en español: "My snake is green and black."',answer:'Mi serpiente es verde y negra.',
-       words:['Mi','serpiente','es','verde','y','negra.'],extraSpares:['roja.','azul','blanca.','gato','negro.','Mi perro']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "My green snake is called Kiwi and she is very calm."',answer:'Mi serpiente verde se llama Kiwi y es muy tranquila.',
+       words:['Mi','serpiente','verde','se','llama','Kiwi','y','es','muy','tranquila.'],extraSpares:['negro.','azul','blanca.','gato','roja.']},
       {diff:'hard',type:'comp',context:'"Tengo un perro negro, un gato blanco y una serpiente verde. No tengo peces ni conejos."',
-       question:'¿Cuántas mascotas tiene? (How many pets?)',answer:'3',
-       choices:['3','2','4','5','1']},
-      {diff:'hard',type:'comp',context:'"Mi cobaya se llama Mochi. Es marrón y blanca. Mi perro se llama Max. Es negro y muy grande."',
-       question:'¿De qué color es Max? (What colour is Max?)',answer:'negro',
-       choices:['negro','marrón','blanco','verde','azul']},
+       question:'How many pets does this person have, and which do they NOT have?',answer:'3 pets — no fish or rabbits',
+       choices:['3 pets — no fish or rabbits','2 pets — no snake','4 pets — no rabbit','3 pets — no cat','5 pets in total']},
+      {diff:'hard',type:'comp',context:'"Mi cobaya se llama Mochi. Es marrón y blanca. Mi perro se llama Max. Es negro y muy grande. No son del mismo color."',
+       question:'What can we work out from the last sentence?',answer:'Mochi and Max are different colours',
+       choices:['Mochi and Max are different colours','Mochi and Max are the same colour','Max is brown and white','Mochi is black and big','They are both black']},
+      // ── EXTRA: 1.5 vocab — ratón, more colours, ¿Cómo es?, creo que, hay ──
+      {diff:'easy',type:'vocab',prompt:'What does "Tengo un ratón" mean?',answer:'I have a mouse',
+       choices:['I have a mouse','I have a rabbit','I have a rat','I have a hamster','I have a snake']},
+      {diff:'easy',type:'vocab',prompt:'What colour is "rosa"?',answer:'pink',
+       choices:['pink','red','purple','orange','yellow']},
+      {diff:'easy',type:'vocab',prompt:'What colour is "naranja"?',answer:'orange',
+       choices:['orange','yellow','pink','brown','red']},
+      {diff:'easy',type:'vocab',prompt:'What colour is "gris"?',answer:'grey',
+       choices:['grey','brown','black','white','blue']},
+      {diff:'easy',type:'vocab',prompt:'What colour is "amarillo"?',answer:'yellow',
+       choices:['yellow','orange','green','pink','brown']},
+      {diff:'normal',type:'vocab',prompt:'What does "¿Cómo es?" mean?',answer:'What is it like?',
+       choices:['What is it like?','What is it called?','How many are there?','Where is it?','How old is it?']},
+      {diff:'normal',type:'vocab',prompt:'What does "Creo que es muy tonto" mean?',answer:'I think it is very silly',
+       choices:['I think it is very silly','I know it is very silly','It is very silly','I think it is very clever','I think it is very calm']},
+      {diff:'normal',type:'vocab',prompt:'What does "Hay tres mascotas" mean?',answer:'There are three pets',
+       choices:['There are three pets','I have three pets','He has three pets','Three pets are called…','There are no pets']},
+      {diff:'normal',type:'comp',context:'"Tengo una cobaya que se llama Lechuga. Es amarilla pero tiene las patas negras. Creo que es un poco tonta."',
+       question:'What does the owner think about their guinea pig?',answer:'That she is a little silly',
+       choices:['That she is a little silly','That she is very clever','That she is very calm','That she is very friendly','That she is brilliant']},
+      {diff:'hard',type:'builder',prompt:'Build in Spanish: "I have a pink rabbit. I think it is quite funny."',answer:'Tengo un conejo rosa. Creo que es bastante divertido.',
+       words:['Tengo','un','conejo','rosa.','Creo','que','es','bastante','divertido.'],extraSpares:['gris','muy','tonto.','amarillo','serpiente']},
+      {diff:'hard',type:'comp',context:'"En la foto hay dos mascotas. A la izquierda hay un ratón gris. Creo que es un poco tímido. A la derecha hay una serpiente verde. ¡Es genial!"',
+       question:'How many pets are in the photo and what does the owner think of the snake?',answer:'Two pets — the owner thinks the snake is great',
+       choices:['Two pets — the owner thinks the snake is great','One pet — the snake is shy','Three pets — the snake is silly','Two pets — the mouse is great','Two pets — both are shy']},
     ]
   },
 ];
@@ -2063,39 +2209,8 @@ function allowedDiffs(){
 function buildSession(worldIdx){
   const allowed=allowedDiffs();
   const raw=WORLDS[worldIdx].pool.filter(q=>allowed.includes(q.diff));
-  const weights=WORLD_DIFF[worldIdx].typeWeights;
-  const byType={vocab:[],grammar:[],builder:[],comp:[]};
-  raw.forEach(q=>byType[q.type].push(q));
-  Object.keys(byType).forEach(t=>{ byType[t]=shuffle(byType[t]); });
-
-  // Distribute 8 slots proportionally by weight, min 1 per available type
-  const types=['vocab','grammar','builder','comp'];
-  const totalWeight=types.reduce((s,t)=>s+weights[t],0);
-  const slots={};
-  let assigned=0;
-  types.forEach(t=>{
-    slots[t]=byType[t].length>0 ? Math.max(1,Math.round((weights[t]/totalWeight)*TOTAL_Q)) : 0;
-    assigned+=slots[t];
-  });
-  // Adjust rounding to exactly TOTAL_Q
-  while(assigned>TOTAL_Q){
-    const t=types.filter(t=>slots[t]>1).sort((a,b)=>slots[b]-slots[a])[0];
-    if(!t) break; slots[t]--; assigned--;
-  }
-  while(assigned<TOTAL_Q){
-    const t=types.filter(t=>byType[t].length>slots[t]).sort((a,b)=>slots[a]-slots[b])[0];
-    if(!t) break; slots[t]++; assigned++;
-  }
-
-  let session=[];
-  types.forEach(t=>session.push(...byType[t].slice(0,slots[t])));
-
-  // Backfill if pool was short
-  const used=new Set(session);
-  const remaining=shuffle(raw.filter(q=>!used.has(q)));
-  while(session.length<TOTAL_Q && remaining.length>0) session.push(remaining.shift());
-
-  return shuffle(session);
+  // Return all available questions shuffled — consumed one at a time from lairQueue
+  return shuffle(raw);
 }
 
 // ═══════════════════════════════════
@@ -2104,7 +2219,22 @@ function buildSession(worldIdx){
 let wIdx=0,qIdx=0,coinsEarned=0,totalWrong=0;
 let globalStart=null,globalTimer=null;
 let qTimer=null,qTimerSec=0,qTimerMax=0;
-let activeSession=[];  // the 8 questions for the current world run
+let activeSession=[];  // unused legacy — kept so renderQ reference doesn't break
+let lairQueue=[];      // full shuffled question queue for this lair
+let lairQueueIdx=0;    // current position in lairQueue
+let usedQs=new Set();  // correctly answered — never re-inserted into queue
+
+function startLair(worldIdx){
+  const allowed=allowedDiffs();
+  const raw=WORLDS[worldIdx].pool.filter(q=>allowed.includes(q.diff));
+  lairQueue=shuffle(raw);
+  lairQueueIdx=0;
+  usedQs=new Set();
+}
+
+function currentQ(){
+  return lairQueue[lairQueueIdx];
+}
 
 // ═══════════════════════════════════
 //  SCREENS
@@ -2244,7 +2374,7 @@ function updateHUD(){
   }
   const lbl=document.createElement('div');lbl.className='cp-label';
   lbl.textContent=`${coinsEarned}/${TOTAL_Q} GEMS`;row.appendChild(lbl);
-  document.getElementById('q-num').textContent=`Q ${qIdx+1} OF ${TOTAL_Q}`;
+  document.getElementById('q-num').textContent=`Q ${lairQueueIdx+1}`;
 }
 
 // ═══════════════════════════════════
@@ -2258,7 +2388,8 @@ function renderQ(){
   updateHUD();
   document.getElementById('feedback').textContent='';
   document.getElementById('feedback').className='feedback';
-  const q=activeSession[qIdx];
+  const q=currentQ();
+  if(!q){ advance(); return; } // guard: skip if queue ran out
   document.getElementById('banner-qtype').textContent=TYPE_LABELS[q.type];
   const area=document.getElementById('q-area');
   area.style.pointerEvents=''; // reset any pointer-event block
@@ -2433,7 +2564,7 @@ function renderBuilder(q,area,badge){
       const fb=document.getElementById('feedback');
       fb.textContent=`💀 Correct: ${q.answer}`;fb.className='feedback bad';
       playTone('wrong');
-      totalWrong++;setPending(advance,1900);
+      totalWrong++;markWrongAndRetry();setPending(advance,1900);
     }
   };
 }
@@ -2451,64 +2582,493 @@ function handleMC(chosen,answer,btn,allBtns){
     const fb=document.getElementById('feedback');
     fb.textContent=`💀 Correct answer: ${answer}`;fb.className='feedback bad';
     playTone('wrong');
-    totalWrong++;setPending(advance,1900);
+    totalWrong++;markWrongAndRetry();setPending(advance,1900);
   }
 }
 
 // ── On correct ──────────────────────
 function onCorrect(){
-  stopQTimer(); // kill timer immediately on correct answer
+  stopQTimer();
+  const q=currentQ();
+  usedQs.add(q); // mark correct — won't come back
   const prevCoins=coinsEarned;
   coinsEarned++;
-  // Light up pip
   const pip=document.getElementById(`cp${prevCoins}`);
   if(pip) pip.classList.add('lit');
   const lbl=document.getElementById('coin-progress-row').querySelector('.cp-label');
   if(lbl) lbl.textContent=`${coinsEarned}/${TOTAL_Q}`;
   document.getElementById('hud-coins').textContent=`💎 ×${coinsEarned}`;
-  // Pop block on track
   popBlock(prevCoins);
-  // Coin pop + star on track
   const track=document.getElementById('progress-track');
   const mx=parseFloat(document.getElementById('track-mario').style.left||'10');
   spawnCoinPop(mx,track.offsetHeight-60);
   spawnStarBurst(mx+10,track.offsetHeight-70);
-  // Move Mario
   moveRider(coinsEarned);
-  // Feedback
   const fb=document.getElementById('feedback');
   fb.textContent='💎 GEM GET! ¡Correcto!';fb.className='feedback good';
   playTone('coin');
-  if(coinsEarned>=TOTAL_Q){setPending(showClear,800);}
+  if(coinsEarned>=TOTAL_Q){setPending(()=>showMiniGame(wIdx,showClear),800);}
   else{setPending(advance,800);}
 }
 
+function markWrongAndRetry(){
+  // Re-insert wrong question 3 spots ahead in the queue
+  const q=currentQ();
+  if(usedQs.has(q)) return; // already got it right somehow — skip
+  const ahead=lairQueue.slice(lairQueueIdx+1);
+  if(!ahead.includes(q)){
+    const insertAt=Math.min(lairQueueIdx+4, lairQueue.length);
+    lairQueue.splice(insertAt,0,q);
+  }
+}
+
 function advance(){
-  cancelPending(); stopQTimer(); // kill any ghost timeouts and timer
-  qIdx++;
-  if(qIdx>=TOTAL_Q){
-    if(coinsEarned>=TOTAL_Q){
-      showClear();
-    } else {
-      activeSession=buildSession(wIdx);
-      qIdx=0;
-      renderQ();
-      window.scrollTo(0,0);
-      setTimeout(()=>{
-        const fb=document.getElementById('feedback');
-        if(fb){ fb.textContent=`Keep going! ${TOTAL_Q-coinsEarned} gem${TOTAL_Q-coinsEarned===1?'':'s'} still needed 💎`; fb.className='feedback bad'; }
-      },100);
-    }
-    return;
+  cancelPending(); stopQTimer();
+  lairQueueIdx++;
+  // Skip questions already correctly answered
+  while(lairQueueIdx<lairQueue.length && usedQs.has(lairQueue[lairQueueIdx])){
+    lairQueueIdx++;
+  }
+  if(coinsEarned>=TOTAL_Q){ showMiniGame(wIdx,showClear); return; }
+  if(lairQueueIdx>=lairQueue.length){
+    // Queue exhausted — extend with unseen questions
+    const allowed=allowedDiffs();
+    const unseen=WORLDS[wIdx].pool.filter(q=>allowed.includes(q.diff)&&!usedQs.has(q));
+    const refill=unseen.length>0 ? shuffle(unseen)
+      : shuffle(WORLDS[wIdx].pool.filter(q=>allowed.includes(q.diff)));
+    lairQueue=[...lairQueue,...refill];
   }
   renderQ();
   window.scrollTo(0,0);
 }
 
+
 // ═══════════════════════════════════
-//  COMBINATION LOCK BONUS CHALLENGE
+//  MINI-GAME ENGINE
 // ═══════════════════════════════════
-const LOCK_DATA = [
+
+// Data per lair — content themed to vocabulary
+const MINI_DATA=[
+  // Lair 1 — Greetings
+  {
+    silhouettes:[
+      {emoji:'👋',choices:['Hola','Adiós','Gracias','Buenas'],answer:'Hola',hint:'A greeting gesture'},
+      {emoji:'😊',choices:['Bien','Fatal','Regular','Mal'],answer:'Bien',hint:'Feeling good'},
+      {emoji:'🏠',choices:['Vivo en','Me llamo','Soy de','Tengo'],answer:'Vivo en',hint:'Where you live'},
+      {emoji:'👤',choices:['Me llamo','Hola','¿Cómo?','Tengo'],answer:'Me llamo',hint:'Introducing your name'},
+      {emoji:'🌍',choices:['Soy de','Vivo en','Me llamo','Tengo'],answer:'Soy de',hint:'Where you are from'},
+      {emoji:'👎',choices:['Mal','Bien','Regular','Fenomenal'],answer:'Mal',hint:'Feeling bad'},
+    ],
+    memPairs:[['hola','hello'],['adiós','goodbye'],['bien','well/good'],['mal','bad'],['gracias','thank you'],['¿cómo?','how?'],['me llamo','my name is'],['soy de','I am from'],['vivo en','I live in'],['años','years old']],
+    spellWords:[{word:'HOLA',hint:'Hello'},{word:'VIVO',hint:'I live'},{word:'BIEN',hint:'Well/Good'},{word:'ADIOS',hint:'Goodbye'},{word:'LLAMO',hint:'(Me) my name is'},{word:'ANOS',hint:'Years old'}],
+    lockQs:[
+      {q:'How do you say "Hello"?',choices:['¡Hola!','¡Adiós!','Gracias','Por favor'],answer:'¡Hola!'},
+      {q:'Complete: "Me ___ Carlos."',choices:['llamo','llamas','soy','estoy'],answer:'llamo'},
+      {q:'"¿Dónde vives?" means…',choices:['Where do you live?','What is your name?','How are you?','Where are you from?'],answer:'Where do you live?'},
+    ],
+    flightTheme:{bg:'#c84000',obstacle:'🔥',obstacleLabel:'FLAMES',dragon:'🔥'},
+  },
+  // Lair 2 — Personality
+  {
+    silhouettes:[
+      {emoji:'😄',choices:['divertido','tímido','serio','tranquilo'],answer:'divertido',hint:'This person looks…'},
+      {emoji:'😶',choices:['tímido','simpático','tonto','generoso'],answer:'tímido',hint:'This person seems…'},
+      {emoji:'😌',choices:['tranquilo','nervioso','furioso','triste'],answer:'tranquilo',hint:'This person is…'},
+      {emoji:'😇',choices:['simpático','serio','tonto','tímido'],answer:'simpático',hint:'This person is very…'},
+      {emoji:'😐',choices:['serio','divertido','listo','tranquilo'],answer:'serio',hint:'This person looks…'},
+      {emoji:'🤓',choices:['listo','tonto','tímido','generoso'],answer:'listo',hint:'This person is…'},
+    ],
+    memPairs:[['simpático','friendly'],['tímido','shy'],['serio','serious'],['divertido','funny'],['tranquilo','calm'],['generoso','generous'],['listo','clever'],['tonto','silly'],['pero','but'],['también','also']],
+    spellWords:[{word:'TIMIDO',hint:'Shy'},{word:'SERIO',hint:'Serious'},{word:'MUY',hint:'Very'},{word:'LISTO',hint:'Clever'},{word:'TONTO',hint:'Silly'},{word:'PERO',hint:'But'}],
+    lockQs:[
+      {q:'What does "simpático" mean?',choices:['Friendly','Shy','Funny','Serious'],answer:'Friendly'},
+      {q:'Complete: "Soy ___ tímido." (a little)',choices:['un poco','muy','bastante','también'],answer:'un poco'},
+      {q:'Which word means "calm"?',choices:['tranquilo','divertido','generoso','serio'],answer:'tranquilo'},
+    ],
+    flightTheme:{bg:'#1a0a3c',obstacle:'❄️',obstacleLabel:'ICE SHARDS',dragon:'❄️'},
+  },
+  // Lair 3 — Family
+  {
+    silhouettes:[
+      {emoji:'👨',choices:['padre','madre','hermano','abuelo'],answer:'padre',hint:'Who is this?'},
+      {emoji:'👩',choices:['madre','hermana','abuela','tía'],answer:'madre',hint:'Who is this?'},
+      {emoji:'👦',choices:['hermano','hermana','hijo','padre'],answer:'hermano',hint:'Who is this?'},
+      {emoji:'👧',choices:['hermana','madre','abuela','tía'],answer:'hermana',hint:'Who is this?'},
+      {emoji:'👴',choices:['abuelo','padre','tío','hermano'],answer:'abuelo',hint:'Who is this?'},
+      {emoji:'👵',choices:['abuela','madre','tía','hermana'],answer:'abuela',hint:'Who is this?'},
+    ],
+    memPairs:[['madre','mother'],['padre','father'],['hermano','brother'],['hermana','sister'],['tengo','I have'],['único','only'],['abuelo','grandfather'],['abuela','grandmother'],['tío','uncle'],['tía','aunt']],
+    spellWords:[{word:'MADRE',hint:'Mother'},{word:'TENGO',hint:'I have'},{word:'UNICO',hint:'Only (child)'},{word:'PADRE',hint:'Father'},{word:'HERMANO',hint:'Brother'},{word:'ABUELO',hint:'Grandfather'}],
+    lockQs:[
+      {q:'What does "hermana" mean?',choices:['Sister','Brother','Mother','Father'],answer:'Sister'},
+      {q:'Complete: "___ un hermano." (I have)',choices:['Tengo','Tienes','Tiene','Soy'],answer:'Tengo'},
+      {q:'"Hijo único" means…',choices:['Only child','One brother','Big family','No sisters'],answer:'Only child'},
+    ],
+    flightTheme:{bg:'#1a7a30',obstacle:'🌿',obstacleLabel:'VINES',dragon:'🌿'},
+  },
+  // Lair 4 — Pets/Colours (hardest)
+  {
+    silhouettes:[
+      {emoji:'🐍',choices:['serpiente','conejo','cobaya','pez'],answer:'serpiente',hint:'What animal is this?'},
+      {emoji:'🐠',choices:['pez','perro','gato','conejo'],answer:'pez',hint:'What animal is this?'},
+      {emoji:'🔴',choices:['rojo','azul','verde','negro'],answer:'rojo',hint:'What colour?'},
+      {emoji:'🐇',choices:['conejo','cobaya','perro','serpiente'],answer:'conejo',hint:'What animal is this?'},
+      {emoji:'⬛',choices:['negro','blanco','rojo','azul'],answer:'negro',hint:'What colour?'},
+      {emoji:'🐱',choices:['gato','perro','conejo','pez'],answer:'gato',hint:'What animal is this?'},
+    ],
+    memPairs:[['perro','dog'],['gato','cat'],['serpiente','snake'],['cobaya','guinea pig'],['rojo','red'],['negro','black'],['conejo','rabbit'],['pez','fish'],['azul','blue'],['blanco','white']],
+    spellWords:[{word:'NEGRO',hint:'Black'},{word:'COBAYA',hint:'Guinea pig'},{word:'ROJO',hint:'Red'},{word:'CONEJO',hint:'Rabbit'},{word:'GATO',hint:'Cat'},{word:'AZUL',hint:'Blue'}],
+    lockQs:[
+      {q:'What does "serpiente" mean?',choices:['Snake','Cat','Dog','Rabbit'],answer:'Snake'},
+      {q:'Complete: "Mi gato es ___." (black — masc.)',choices:['negro','negra','negros','negras'],answer:'negro'},
+      {q:'"Tengo una cobaya" means…',choices:['I have a guinea pig','I have a cat','I have a snake','I have a fish'],answer:'I have a guinea pig'},
+    ],
+    flightTheme:{bg:'#0d0020',obstacle:'💀',obstacleLabel:'SHADOW BOLTS',dragon:'💀'},
+  },
+];
+
+// Which mini-games are available per lair (weighted by difficulty)
+const MINI_POOLS=[
+  [3,3,3,4],       // Lair 1: Silhouette Match (easiest), lock fallback
+  [5,5,5,4],       // Lair 2: Memory Pairs, lock fallback
+  [2,2,2,4],       // Lair 3: Spell the Word, lock fallback
+  [1,1,1,4],       // Lair 4: Dragon Flight (hardest), lock fallback
+];
+
+function pickMiniGame(lairIdx){
+  const pool=MINI_POOLS[lairIdx];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function showMiniGame(lairIdx, onComplete){
+  const type=pickMiniGame(lairIdx);
+  const data=MINI_DATA[lairIdx];
+  const ov=document.getElementById('mini-ov');
+  const inner=document.getElementById('mini-inner');
+  ov.style.display='flex';
+
+  const done=()=>{
+    ov.style.display='none';
+    playTone('clear');
+    onComplete();
+  };
+
+  if(type===3) buildSilhouette(inner,data,done);
+  else if(type===5) buildMemory(inner,data,done);
+  else if(type===2) buildSpell(inner,data,done);
+  else if(type===4) buildLockMini(inner,data,done);
+  else if(type===1) buildFlight(inner,data,done);
+}
+
+// ── OPTION 3: Silhouette Match ──────────────────────────────
+function buildSilhouette(el,data,done){
+  const items=[...data.silhouettes].sort(()=>Math.random()-.5).slice(0,3);
+  let idx=0; let score=0;
+
+  function render(){
+    const item=items[idx];
+    const shuffled=[...item.choices].sort(()=>Math.random()-.5);
+    el.innerHTML=`
+      <div class="mg-title">🐾 SHADOW MATCH!</div>
+      <div class="mg-sub">${item.hint} — tap the Spanish word</div>
+      <div class="sil-wrap">
+        <div class="sil-img" id="sil-img">${item.emoji}</div>
+        <div class="sil-choices" id="sil-choices"></div>
+        <div class="mg-feedback" id="mg-fb"></div>
+        <div class="mg-sub">${idx+1} / ${items.length}</div>
+      </div>`;
+    const ch=el.querySelector('#sil-choices');
+    shuffled.forEach(c=>{
+      const b=document.createElement('button');
+      b.className='sil-btn';b.textContent=c;
+      b.onclick=()=>{
+        ch.querySelectorAll('.sil-btn').forEach(x=>x.disabled=true);
+        if(c===item.answer){
+          b.classList.add('sil-correct');
+          el.querySelector('#mg-fb').textContent='✓ ¡Correcto!';
+          el.querySelector('#mg-fb').className='mg-feedback good';
+          el.querySelector('#sil-img').classList.add('reveal');
+          playTone('coin');score++;
+          setTimeout(()=>{ idx++; if(idx>=items.length) done(); else render(); },900);
+        } else {
+          b.classList.add('sil-wrong');
+          ch.querySelectorAll('.sil-btn').forEach(x=>{if(x.textContent===item.answer) x.classList.add('sil-correct');});
+          el.querySelector('#mg-fb').textContent=`✗ It was: ${item.answer}`;
+          el.querySelector('#mg-fb').className='mg-feedback bad';
+          playTone('wrong');
+          setTimeout(()=>{ idx++; if(idx>=items.length) done(); else render(); },1200);
+        }
+      };
+      ch.appendChild(b);
+    });
+  }
+  render();
+}
+
+// ── OPTION 5: Memory Pairs ──────────────────────────────────
+function buildMemory(el,data,done){
+  const pairs=[...data.memPairs].sort(()=>Math.random()-.5).slice(0,6);
+  const cards=[];
+  pairs.forEach(([sp,en])=>{ cards.push({id:sp,text:sp,type:'es'}); cards.push({id:sp,text:en,type:'en'}); });
+  cards.sort(()=>Math.random()-.5);
+  let flipped=[],matched=0,locked=false;
+
+  el.innerHTML=`
+    <div class="mg-title">🃏 MEMORY MATCH!</div>
+    <div class="mg-sub">Find the Spanish ↔ English pairs</div>
+    <div class="mem-grid g3x2" id="mem-grid"></div>
+    <div class="mem-score" id="mem-score">PAIRS: 0 / ${pairs.length}</div>
+    <div class="mg-feedback" id="mg-fb"></div>`;
+
+  const grid=el.querySelector('#mem-grid');
+  cards.forEach((card,i)=>{
+    const div=document.createElement('div');
+    div.className='mem-card';div.dataset.i=i;
+    div.innerHTML=`<div class="mem-card-inner"><div class="mem-card-front">🐉</div><div class="mem-card-back">${card.text}</div></div>`;
+    div.onclick=()=>{
+      if(locked||div.classList.contains('flipped')||div.classList.contains('matched')) return;
+      div.classList.add('flipped');
+      flipped.push({div,card});
+      if(flipped.length===2){
+        locked=true;
+        const [a,b]=flipped;
+        if(a.card.id===b.card.id && a.card.type!==b.card.type){
+          // Match!
+          setTimeout(()=>{
+            a.div.classList.add('matched'); b.div.classList.add('matched');
+            matched++; flipped=[];locked=false;
+            el.querySelector('#mem-score').textContent=`PAIRS: ${matched} / ${pairs.length}`;
+            el.querySelector('#mg-fb').textContent='✓ Match!';
+            el.querySelector('#mg-fb').className='mg-feedback good';
+            playTone('coin');
+            if(matched>=pairs.length) setTimeout(done,600);
+          },400);
+        } else {
+          setTimeout(()=>{
+            a.div.classList.remove('flipped'); b.div.classList.remove('flipped');
+            flipped=[];locked=false;
+            el.querySelector('#mg-fb').textContent='✗ Try again!';
+            el.querySelector('#mg-fb').className='mg-feedback bad';
+            playTone('wrong');
+          },900);
+        }
+      }
+    };
+    grid.appendChild(div);
+  });
+}
+
+// ── OPTION 2: Spell the Word ────────────────────────────────
+function buildSpell(el,data,done){
+  const words=[...data.spellWords].sort(()=>Math.random()-.5).slice(0,3);
+  let wIdx=0;
+
+  function render(){
+    const item=words[wIdx];
+    const word=item.word.toUpperCase();
+    const letters=[...word].sort(()=>Math.random()-.5);
+    let placed=[];
+
+    function drawSlots(){
+      const sl=el.querySelector('#spell-slots');
+      sl.innerHTML='';
+      word.split('').forEach((_,i)=>{
+        const s=document.createElement('div');
+        s.className='spell-slot';
+        s.textContent=placed[i]||'';
+        sl.appendChild(s);
+      });
+    }
+
+    el.innerHTML=`
+      <div class="mg-title">✨ SPELL THE MAGIC WORD!</div>
+      <div class="mg-sub">Tap the letters in order · ${wIdx+1} of ${words.length}</div>
+      <div class="spell-hint">"${item.hint}"</div>
+      <div class="spell-slots" id="spell-slots"></div>
+      <div class="spell-letters" id="spell-letters"></div>
+      <div class="spell-actions">
+        <button class="mg-btn" id="spell-clear">✕ CLEAR</button>
+      </div>
+      <div class="mg-feedback" id="mg-fb"></div>`;
+
+    drawSlots();
+    const lb=el.querySelector('#spell-letters');
+    letters.forEach((ch,i)=>{
+      const btn=document.createElement('div');
+      btn.className='spell-letter';btn.textContent=ch;btn.dataset.i=i;
+      btn.onclick=()=>{
+        if(btn.classList.contains('used')||placed.length>=word.length) return;
+        btn.classList.add('used');
+        placed.push(ch);
+        drawSlots();
+        if(placed.length===word.length){
+          const attempt=placed.join('');
+          if(attempt===word){
+            el.querySelector('#mg-fb').textContent='✨ ¡Perfecto!';
+            el.querySelector('#mg-fb').className='mg-feedback good';
+            playTone('coin');
+            setTimeout(()=>{ wIdx++; if(wIdx>=words.length) done(); else render(); },900);
+          } else {
+            el.querySelector('#mg-fb').textContent=`✗ Not quite! The word is: ${word}`;
+            el.querySelector('#mg-fb').className='mg-feedback bad';
+            playTone('wrong');
+            setTimeout(()=>{
+              placed=[];
+              el.querySelectorAll('.spell-letter').forEach(x=>x.classList.remove('used'));
+              drawSlots();
+              el.querySelector('#mg-fb').textContent='';
+            },1400);
+          }
+        }
+      };
+      lb.appendChild(btn);
+    });
+
+    el.querySelector('#spell-clear').onclick=()=>{
+      placed=[];
+      el.querySelectorAll('.spell-letter').forEach(x=>x.classList.remove('used'));
+      drawSlots();
+    };
+  }
+  render();
+}
+
+// ── OPTION 4: Lock (mini version, uses existing lock data) ──
+function buildLockMini(el,data,done){
+  const qs=[...data.lockQs];
+  let idx=0;
+
+  function render(){
+    const q=qs[idx];
+    const shuffled=[...q.choices].sort(()=>Math.random()-.5);
+    el.innerHTML=`
+      <div class="mg-title">🔐 DRAGON LOCK!</div>
+      <div class="mg-sub">QUESTION ${idx+1} OF ${qs.length} — answer to click the lock</div>
+      <div class="lock-symbols" style="margin:.4rem 0;">
+        ${qs.map((_,i)=>`<div class="lock-slot ${i<idx?'unlocked':'locked'}" style="width:52px;height:52px;font-size:1.8rem;">${i<idx?'🔓':'🔒'}</div>`).join('')}
+      </div>
+      <div class="lock-q-wrap">
+        <div class="lock-q-text" style="margin-bottom:.8rem;">${q.q}</div>
+        <div class="lock-choices" id="lk-choices"></div>
+        <div class="mg-feedback" id="mg-fb"></div>
+      </div>`;
+    const ch=el.querySelector('#lk-choices');
+    shuffled.forEach(c=>{
+      const b=document.createElement('button');
+      b.className='lock-choice-btn';b.textContent=c;
+      b.onclick=()=>{
+        ch.querySelectorAll('.lock-choice-btn').forEach(x=>x.disabled=true);
+        if(c===q.answer){
+          b.classList.add('lk-correct');
+          el.querySelector('#mg-fb').textContent='✓ ¡Correcto! Click!';
+          el.querySelector('#mg-fb').className='mg-feedback good';
+          playTone('coin');
+          setTimeout(()=>{ idx++; if(idx>=qs.length) done(); else render(); },900);
+        } else {
+          b.classList.add('lk-wrong');
+          ch.querySelectorAll('.lock-choice-btn').forEach(x=>{if(x.textContent===q.answer) x.classList.add('lk-correct');});
+          el.querySelector('#mg-fb').textContent=`✗ Answer: ${q.answer} — try next!`;
+          el.querySelector('#mg-fb').className='mg-feedback bad';
+          playTone('wrong');
+          setTimeout(()=>{ idx++; if(idx>=qs.length) done(); else render(); },1200);
+        }
+      };
+      ch.appendChild(b);
+    });
+  }
+  render();
+}
+
+// ── OPTION 1: Dragon Flight ─────────────────────────────────
+function buildFlight(el,data,done){
+  const theme=data.flightTheme;
+  const W=Math.min(560,window.innerWidth-32), H=220;
+  el.innerHTML=`
+    <div class="mg-title">${theme.dragon} DRAGON FLIGHT!</div>
+    <div class="flight-tip">Tap / click / spacebar to flap — dodge the ${theme.obstacleLabel}!</div>
+    <canvas id="flight-canvas" width="${W}" height="${H}"></canvas>
+    <div class="flight-lives" id="flight-lives">❤️❤️❤️</div>
+    <div class="mg-feedback" id="mg-fb"></div>`;
+
+  const canvas=el.querySelector('#flight-canvas');
+  const ctx=canvas.getContext('2d');
+  let lives=3, frameId=null, gameOver=false, won=false;
+  let dy=0, y=H/2;
+  const GRAVITY=0.38, FLAP=-6.5, DRAGON_X=60, DRAGON_SIZE=32;
+  let obstacles=[], frame=0, speed=2.8, passed=0, NEED=5;
+
+  // Flap on tap/click
+  const flap=()=>{ if(!gameOver && !won) dy=FLAP; };
+  const flapTouch=e=>{e.preventDefault();flap();};
+  const flapKey=e=>{ if(e.code==='Space'||e.key===' ') { e.preventDefault(); flap(); } };
+  canvas.addEventListener('click',flap);
+  canvas.addEventListener('touchstart',flapTouch,{passive:false});
+  document.addEventListener('keydown',flapKey);
+
+  function spawnObs(){
+    const gapY=50+Math.random()*(H-120), gapH=110;
+    obstacles.push({x:W, gapY, gapH});
+  }
+
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    // Background
+    ctx.fillStyle=theme.bg;ctx.fillRect(0,0,W,H);
+    // Dragon (simple circle + text)
+    dy+=GRAVITY; y+=dy; y=Math.max(DRAGON_SIZE/2,Math.min(H-DRAGON_SIZE/2,y));
+    ctx.font=`${DRAGON_SIZE}px serif`;
+    ctx.fillText('🐲',DRAGON_X-DRAGON_SIZE/2,y+DRAGON_SIZE/3);
+
+    // Obstacles
+    frame++;
+    if(frame%70===0) spawnObs();
+    obstacles.forEach(ob=>{
+      ob.x-=speed;
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      ctx.font='22px serif';
+      // Top wall
+      for(let fy=0;fy<ob.gapY-ob.gapH/2;fy+=28) ctx.fillText(theme.obstacle,ob.x,fy+24);
+      // Bottom wall
+      for(let fy=ob.gapY+ob.gapH/2;fy<H;fy+=28) ctx.fillText(theme.obstacle,ob.x,fy+24);
+      // Count pass
+      if(!ob.passed && ob.x+20<DRAGON_X){ ob.passed=true; passed++;
+        if(passed>=NEED){ won=true; cancel(); setTimeout(done,300); return; }
+      }
+      // Collision
+      const drX=DRAGON_X, drY=y, r=DRAGON_SIZE/2-4;
+      const inX=drX+r>ob.x && drX-r<ob.x+28;
+      const inY=drY-r<ob.gapY-ob.gapH/2 || drY+r>ob.gapY+ob.gapH/2;
+      if(inX && inY && !ob.hit){
+        ob.hit=true; lives--;
+        const lv=el.querySelector('#flight-lives');
+        if(lv) lv.textContent='❤️'.repeat(Math.max(0,lives));
+        playTone('wrong');
+        if(lives<=0){ gameOver=true; cancel();
+          const fb=el.querySelector('#mg-fb');
+          if(fb){fb.textContent='✗ Try again!';fb.className='mg-feedback bad';}
+          setTimeout(()=>buildFlight(el,data,done),1200);
+        }
+      }
+    });
+    obstacles=obstacles.filter(o=>o.x>-40);
+    // Progress bar
+    ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fillRect(0,H-8,W,8);
+    ctx.fillStyle='#f8d800';ctx.fillRect(0,H-8,(passed/NEED)*W,8);
+    // Pass count
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='11px monospace';
+    ctx.fillText(`${passed}/${NEED} obstacles`,W-100,16);
+
+    if(!gameOver && !won) frameId=requestAnimationFrame(loop);
+  }
+  function cancel(){ if(frameId) cancelAnimationFrame(frameId); frameId=null;
+    canvas.removeEventListener('click',flap);
+    canvas.removeEventListener('touchstart',flapTouch);
+    document.removeEventListener('keydown',flapKey); }
+
+  setTimeout(()=>loop(),300); // short delay so player sees instructions
+}
+
+const LOCK_DATA=[
   // Lair 1: Greetings — 3 questions, symbols for each
   {
     title:'🔥 BREAK THE FIRE SEAL!',
@@ -2662,7 +3222,7 @@ function lockComplete(){
     } else {
       fadeTransition(()=>{
         wIdx++;qIdx=0;coinsEarned=0;
-        activeSession=buildSession(wIdx);
+        startLair(wIdx);
         applyTheme(wIdx);buildTrack();renderQ();window.scrollTo(0,0);
       });
     }
@@ -2698,7 +3258,7 @@ document.getElementById('next-btn').onclick=()=>{
 document.getElementById('retry-btn').onclick=()=>{
   document.getElementById('timeout-ov').classList.remove('show');
   qIdx=0;coinsEarned=0;
-  activeSession=buildSession(wIdx);
+  startLair(wIdx);
   buildTrack();renderQ();window.scrollTo(0,0);
 };
 
@@ -2803,7 +3363,7 @@ function showWin(){
 function startGame(){
   cancelPending(); stopQTimer();
   wIdx=0;qIdx=0;coinsEarned=0;totalWrong=0;
-  activeSession=buildSession(0);
+  startLair(0);
   applyTheme(0);applyParallax(0);buildTrack();startGlobal();
   showScreen('room-screen');renderQ();
 }
@@ -2846,8 +3406,10 @@ document.getElementById('print-btn').onclick=()=>{
   <div id="wi-desc" style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;color:#fff;max-width:480px;line-height:1.6;opacity:.9;background:rgba(0,0,0,.3);padding:.8rem 1.2rem;border-radius:0;"></div>
   <div style="font-family:'Press Start 2P',monospace;font-size:.45rem;color:#fff;opacity:.6;letter-spacing:2px;margin-top:.5rem;animation:blink2 1s step-end infinite;">PRESS ANY KEY OR TAP TO START</div>
 </div>
+<style>
 @keyframes fadeInOv{from{opacity:0;}to{opacity:1;}}
 @keyframes blink2{50%{opacity:0;}}
+</style>
 
 </body>
 </html>
